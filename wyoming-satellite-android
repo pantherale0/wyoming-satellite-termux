@@ -1,5 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/sh
 export OWW_ENABLED=false
+export SELECTED_WAKE_WORD=false
+export CUSTOM_DEV_NAME="false"
 
 wlog() {
     local message="$1"
@@ -7,7 +9,6 @@ wlog() {
 }
 
 echo "" > "$HOME/wyoming-satellite.log"
-#echo "" > "$HOME/wyoming-openwakeword.log"
 wlog "$(date)"
 
 wlog "Ensure sox is available..."
@@ -20,20 +21,24 @@ if ! command -v rec > /dev/null 2>&1 || ! command -v play > /dev/null 2>&1; then
     fi
 fi
 
-export TERMUX_INFO="$(termux-info)"
-export MANUFACTURER_NAME="$(echo "$TERMUX_INFO" | grep -A 1 "Device manufacturer:" | tail -1)"
-export MODEL_NAME="$(echo "$TERMUX_INFO" | grep -A 1 "Device model:" | tail -1)"
-if [ "$MANUFACTURER_NAME $MODEL_NAME" = " " ]; then 
-    export SATELLITE_NAME="Android Satellite"
+if [ "$CUSTOM_DEV_NAME" = "false" ]; then
+    export TERMUX_INFO="$(termux-info)"
+    export MANUFACTURER_NAME="$(echo "$TERMUX_INFO" | grep -A 1 "Device manufacturer:" | tail -1)"
+    export MODEL_NAME="$(echo "$TERMUX_INFO" | grep -A 1 "Device model:" | tail -1)"
+    if [ "$MANUFACTURER_NAME $MODEL_NAME" = " " ]; then 
+        export SATELLITE_NAME="Android Satellite"
+    else
+        export SATELLITE_NAME="Android Satellite - $MANUFACTURER_NAME $MODEL_NAME"
+    fi
 else
-    export SATELLITE_NAME="Android Satellite - $MANUFACTURER_NAME $MODEL_NAME"
+    export SATELLITE_NAME="Android Satellite - $CUSTOM_DEV_NAME"
 fi
 
 if [ "$OWW_ENABLED" = "true" ]; then
-    export OWW_FLAGS="--wake-uri tcp://127.0.0.1:10400 --wake-word-name ok_nabu"
+    export OWW_FLAGS="--wake-uri tcp://127.0.0.1:10400 --wake-word-name $SELECTED_WAKE_WORD"
     wlog "Enter wyoming-openwakeword directory..."
     cd "$HOME/wyoming-openwakeword"
-    stdbuf -oL -eL python3 ./script/run --uri 'tcp://0.0.0.0:10400' --preload-model 'ok_nabu' --debug 2>&1 | tee -a "$HOME/wyoming-satellite.log" &
+    stdbuf -oL -eL python3 ./script/run --uri 'tcp://0.0.0.0:10400' --preload-model "$SELECTED_WAKE_WORD" --debug 2>&1 | tee -a "$HOME/wyoming-satellite.log" &
 else
     export OWW_FLAGS=""
 fi

@@ -1,9 +1,14 @@
 #!/data/data/com.termux/files/usr/bin/sh
 
+echo "Stopping and killing any remaining Wyoming instances"
+sv down wyoming
+killall python3
+sv-disable wyoming
+
 echo "Deleting files and directories related to the project..."
 rm -f ~/tmp.wav
 rm -f ~/pulseaudio-without-memfd.deb 
-rm -rf ~/.termux/boot/wyoming-satellite-android 
+rm -rf $PREFIX/var/service/wyoming
 rm -rf ~/wyoming-satellite
 rm -rf ~/wyoming-openwakeword
 
@@ -14,6 +19,13 @@ if command -v pulseaudio > /dev/null 2>&1; then
     if [ "$ARCH" = "arm" ] ; then
         pkg remove -y pulseaudio
     fi
+fi
+
+echo "Would you like to remove Termux Services? [y/N]"
+read remove_services
+if [ "$remove_services" = "y" ] || [ "$remove_services" = "Y" ]; then
+    rm -f ~/.termux/boot/services-autostart
+    pkg uninstall termux-services -y
 fi
 
 echo "Done"
