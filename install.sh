@@ -24,6 +24,16 @@ if ! command -v wget > /dev/null 2>&1; then
     fi
 fi
 
+echo "Ensure Python + pip is available..."
+if ! command -v python3 > /dev/null 2>&1; then
+    echo "Installing python..."
+    pkg install python python-pip -y
+    if ! command -v python3 > /dev/null 2>&1; then
+        echo "ERROR: Failed to install python3" >&2
+        exit 1
+    fi
+fi
+
 echo "Clean up potential garbage that might otherwise get in the way..."
 wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/uninstall.sh | bash
 
