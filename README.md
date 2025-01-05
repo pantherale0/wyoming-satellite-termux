@@ -69,8 +69,6 @@ wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux
 
 - It should ask you for a host and a port now. Enter the IP address of your Android device into the host-field (if unsure what you IP is, run `ifconfig` in Termux and check the output, it will most likely start with `192.`) and enter 10700 in the port-field.
 
-- You may need to do this again if you have setup openwakeword, instead of port "10700" use port "10400"
-
 ### Stopping / starting service
 
 - To stop the service, run `sv down wyoming`

@@ -289,8 +289,7 @@ if [ "$HIDE_POST" = "1" ]; then
     echo "Install is now complete, the rest of the configuration can be performed in the Home Assistant UI"
     echo "-----"
     echo "Setup the Wyoming platform (see readme for information). Use the IP address noted earlier with"
-    echo "Port: 10700 (Wyoming Satellite service itself)"
-    echo "Port: 10400 (Wyoming OpenWakeWord, this may not be required)"
+    echo "Port: 10700 (Wyoming Satellite)"
     echo "-----"
     echo "Press enter to continue"
     read
