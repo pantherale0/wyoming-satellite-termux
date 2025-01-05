@@ -174,6 +174,9 @@ if [ "$SKIP_WYOMING" = "0" ]; then
     echo "Enter wyoming-satellite directory..."
     cd wyoming-satellite
 
+    echo "Installing Python Deps"
+    pip install -r requirements.txt
+
     echo "Running Wyoming Satellite setup script..."
     echo "This process may appear to hang on low spec hardware. Do not exit unless you are sure that that the process is no longer responding"
     ./script/setup
