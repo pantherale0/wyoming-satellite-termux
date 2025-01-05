@@ -4,9 +4,28 @@ SKIP_UNINSTALL=0
 SKIP_WYOMING=0
 SKIP_OWW=0
 SELECTED_WAKE_WORD=""
+SELECTED_DEVICE_NAME=""
+NO_AUTOSTART=""
+HIDE_POST=""
 
 for i in "$@"; do
   case $i in
+    --wake-word=*)
+      SELECTED_WAKE_WORD="${i#*=}"
+      shift
+      ;;
+    --device-name=*)
+      SELECTED_WAKE_WORD="${i#*=}"
+      shift
+      ;;
+    --no-autostart)
+      NO_AUTOSTART=1
+      shift
+      ;;
+    --hide-post-instructions)
+      HIDE_POST=1
+      shift
+      ;;
     --skip-uninstall)
       SKIP_UNINSTALL=1
       shift
@@ -203,35 +222,33 @@ if [ "$SKIP_WYOMING" = "0" ]; then
     sleep 5
     sv enable wyoming
 
-    echo "Would you like to set a custom device name? [y/N]"
-    read setup_device_name
-    if [ "$setup_device_name" = "y" ] || [ "$setup_device_name" = "Y" ]; then
-        echo "Provide the full name and press enter"
-        read device_name
-        sed -i "s/^export CUSTOM_DEV_NAME=false$/export CUSTOM_DEV_NAME=$device_name/" $PREFIX/var/service/wyoming/run 
+    if [ ! "$SELECTED_DEVICE_NAME" = "" ]; then
+        sed -i "s/^export CUSTOM_DEV_NAME=false$/export CUSTOM_DEV_NAME=$SELECTED_DEVICE_NAME/" $PREFIX/var/service/wyoming/run 
     fi
 
     echo "Successfully installed and set up Wyoming Satellite"
 fi
 
 if [ "$SKIP_OWW" = "0" ]; then
-    echo "Select the wake word you would like to use:"
-    echo "1. Ok Nabu *"
-    echo "2. Alexa"
-    echo "3. Hey Mycroft"
-    echo "4. Hey Jarvis"
-    echo "5. Hey Rhasspy"
-    read wake_word_option
-    if [ "$wake_word_option" = "1" ] || ["$wake_word_option" = "" ]; then
-        SELECTED_WAKE_WORD="ok_nabu"
-    elif [ "$wake_word_option" = "2" ]; then
-        SELECTED_WAKE_WORD="alexa"
-    elif [ "$wake_word_option" = "3" ]; then
-        SELECTED_WAKE_WORD="hey_mycroft"
-    elif [ "$wake_word_option" = "4" ]; then
-        SELECTED_WAKE_WORD="hey_jarvis"
-    elif [ "$wake_word_option" = "5" ]; then
-        SELECTED_WAKE_WORD="hey_rhasspy"
+    if [ "$wake_word_option" = "" ]; then
+        echo "Select the wake word you would like to use:"
+        echo "1. Ok Nabu *"
+        echo "2. Alexa"
+        echo "3. Hey Mycroft"
+        echo "4. Hey Jarvis"
+        echo "5. Hey Rhasspy"
+        read wake_word_option
+        if [ "$wake_word_option" = "1" ] || ["$wake_word_option" = "" ]; then
+            SELECTED_WAKE_WORD="ok_nabu"
+        elif [ "$wake_word_option" = "2" ]; then
+            SELECTED_WAKE_WORD="alexa"
+        elif [ "$wake_word_option" = "3" ]; then
+            SELECTED_WAKE_WORD="hey_mycroft"
+        elif [ "$wake_word_option" = "4" ]; then
+            SELECTED_WAKE_WORD="hey_jarvis"
+        elif [ "$wake_word_option" = "5" ]; then
+            SELECTED_WAKE_WORD="hey_rhasspy"
+        fi
     fi
     echo "Selected $SELECTED_WAKE_WORD"
     echo "Ensure python-tflite-runtime, ninja and patchelf are installed..."
@@ -250,34 +267,32 @@ if [ "$SKIP_OWW" = "0" ]; then
     echo "Setting configured wakeword..."
     sed -i "s/^export SELECTED_WAKE_WORD=false$/export SELECTED_WAKE_WORD=$SELECTED_WAKE_WORD/" $PREFIX/var/service/wyoming/run
     cd ..
-    echo "Launch Wyoming OpenWakeWord and Wyoming Satellite now? [y/N]"
-else
-    echo "Launch Wyoming Satellite now? [y/N]"
 fi
 
-read launch_now
-if [ "$launch_now" = "y" ] || [ "$launch_now" = "Y" ]; then
+if [ "$NO_AUTOSTART" = "1" ]; then
     echo "Starting Wyoming service now..."
     sv up wyoming
 fi
 
-clear
-echo "Install is now complete, the rest of the configuration can be performed in the Home Assistant UI"
-echo "-----"
-echo "Setup the Wyoming platform (see readme for information). Use the IP address noted earlier with"
-echo "Port: 10700 (Wyoming Satellite service itself)"
-echo "Port: 10400 (Wyoming OpenWakeWord, this may not be required)"
-echo "-----"
-echo "Press enter to continue"
-read
-clear
-echo "Device options can now be set in the Home Assistant UI"
-echo "-----"
-echo "Recommended settings*"
-echo "-----"
-echo "Lenovo ThinkSmart View"
-echo "Mic Volume: 5.0"
-echo "Noise Suppression Level: Medium"
-echo "-----"
-echo "Press enter to exit"
-read
+if [ "$HIDE_POST" = "1" ]; then
+    clear
+    echo "Install is now complete, the rest of the configuration can be performed in the Home Assistant UI"
+    echo "-----"
+    echo "Setup the Wyoming platform (see readme for information). Use the IP address noted earlier with"
+    echo "Port: 10700 (Wyoming Satellite service itself)"
+    echo "Port: 10400 (Wyoming OpenWakeWord, this may not be required)"
+    echo "-----"
+    echo "Press enter to continue"
+    read
+    clear
+    echo "Device options can now be set in the Home Assistant UI"
+    echo "-----"
+    echo "Recommended settings*"
+    echo "-----"
+    echo "Lenovo ThinkSmart View"
+    echo "Mic Volume: 5.0"
+    echo "Noise Suppression Level: Medium"
+    echo "-----"
+    echo "Press enter to exit"
+    read
+fi

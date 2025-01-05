@@ -10,7 +10,7 @@ This project provides a simple way of setting up Wyoming Satellite and OpenWakeW
 
 ### How to install
 
-Open Termux and run:
+For a default install, Open Termux and run:
 
 ``` Bash
 (command -v wget > /dev/null 2>&1 || (echo "Installing wget..." && pkg install -y wget)) && bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/install.sh)
@@ -21,13 +21,17 @@ The above script will configure dependancies and install Wyoming as a service in
 
 A wakelock will be used to keep the services operational in the background.
 
+The default parameters will install Wyoming + OpenWakeWord, set the wake word to `Ok Nabu` and set the Home Assistant device name to the make and model of the Android device. It will also auto launch Wyoming at the end of installation.
+
 ### Command line parameters
 
 `--skip-uninstall`: Skip running uninstall and cleanup during installation
 `--skip-wyoming`: Skip installing the Wyoming Satellite
 `--skip-wakeword`: Skip installing OpenWakeWord
-`--wakeword=...`: Specify a wakeword to use
+`--wake-word=...`: Specify a wakeword to use (defaults to Ok Nabu), must be a supported wakeword by the OpenWakeWord project
 `--device-name=`: Specify a custom device name to use (defaults to make + model of device)
+`--no-autostart`: Don't start Wyoming at the end of installation
+`--hide-post-instructions`: Hide instructions and recommended settings at the end of installation
 
 ### How to uninstall
 
