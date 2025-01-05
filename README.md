@@ -21,6 +21,14 @@ The above script will configure dependancies and install Wyoming as a service in
 
 A wakelock will be used to keep the services operational in the background.
 
+### Command line parameters
+
+`--skip-uninstall`: Skip running uninstall and cleanup during installation
+`--skip-wyoming`: Skip installing the Wyoming Satellite
+`--skip-wakeword`: Skip installing OpenWakeWord
+`--wakeword=...`: Specify a wakeword to use
+`--device-name=`: Specify a custom device name to use (defaults to make + model of device)
+
 ### How to uninstall
 
 Open Termux and run:

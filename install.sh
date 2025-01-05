@@ -194,6 +194,10 @@ if [ "$SKIP_WYOMING" = "0" ]; then
     ln -sf $PREFIX/share/termux-services/svlogger $PREFIX/var/service/wyoming/log/run
     wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/wyoming-satellite-android" -O $PREFIX/var/service/wyoming/run
     chmod +x $PREFIX/var/service/wyoming/run
+    echo "Wyoming service installed. Restarting runsv"
+    killall runsv
+    echo "Waiting for runsv to restart"
+    sleep 5
     sv enable wyoming
 
     echo "Would you like to set a custom device name? [y/N]"
@@ -241,7 +245,7 @@ if [ "$SKIP_OWW" = "0" ]; then
     echo "Ensuring OpenWakeWord is enabled..."
     sed -i 's/^export OWW_ENABLED=false$/export OWW_ENABLED=true/' $PREFIX/var/service/wyoming/run 
     echo "Setting configured wakeword..."
-    sed -i "s/^export SELECTED_WAKE_WORD=false$/export SELECTED_WAKE_WORD=$SELECTED_WAKE_WORD" $PREFIX/var/service/wyoming/run
+    sed -i "s/^export SELECTED_WAKE_WORD=false$/export SELECTED_WAKE_WORD=$SELECTED_WAKE_WORD/" $PREFIX/var/service/wyoming/run
     cd ..
     echo "Launch Wyoming OpenWakeWord and Wyoming Satellite now? [y/N]"
 else
