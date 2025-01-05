@@ -88,6 +88,10 @@ The Assist pipeline can be changed in Home Assistant, look for the entity under 
 
 Ensure you have completely restarted the device once setup is complete, Wyoming should autostart.
 
+- Microsoft Surface Go 2 (BlissOS 15)
+
+Run the script with your configured options and setup in Home Assistant, no further actions are required.
+
 ### Devices not supported
 
 - Lenovo Smart Clock 2
