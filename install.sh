@@ -1,5 +1,22 @@
 #!/data/data/com.termux/files/usr/bin/sh
 
+SKIP_UNINSTALL=0
+
+for i in "$@"; do
+  case $i in
+    --skip-uninstall)
+      SKIP_UNINSTALL=1
+      shift # past argument with no value
+      ;;
+    -*|--*)
+      echo "Unknown option $i"
+      exit 1
+      ;;
+    *)
+      ;;
+  esac
+done
+
 echo "At the end of this process a full reboot is recommended, ensure your device is completely powered down before starting back up"
 echo "This is to ensure that the require wakelocks will start correctly"
 echo "Press enter to continue, alternative press Q to exit"
@@ -34,8 +51,10 @@ if ! command -v python3 > /dev/null 2>&1; then
     fi
 fi
 
-echo "Clean up potential garbage that might otherwise get in the way..."
-wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/uninstall.sh | bash
+if [ "$SKIP_UNINSTALL" = "0" ]; then
+    echo "Clean up potential garbage that might otherwise get in the way..."
+    wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/uninstall.sh | bash
+fi
 
 echo "Ensure sox is available..."
 if ! command -v rec > /dev/null 2>&1; then
