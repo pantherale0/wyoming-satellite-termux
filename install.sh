@@ -1,12 +1,23 @@
 #!/data/data/com.termux/files/usr/bin/sh
 
 SKIP_UNINSTALL=0
+SKIP_WYOMING=0
+SKIP_OWW=0
+SELECTED_WAKE_WORD=""
 
 for i in "$@"; do
   case $i in
     --skip-uninstall)
       SKIP_UNINSTALL=1
-      shift # past argument with no value
+      shift
+      ;;
+    --skip-wyoming)
+      SKIP_WYOMING=1
+      shift
+      ;;
+    --skip-wakeword)
+      SKIP_OWW=1
+      shift
       ;;
     -*|--*)
       echo "Unknown option $i"
@@ -144,53 +155,59 @@ if ! command -v git > /dev/null 2>&1; then
 fi
 
 echo "Ensure Termux Services is available..."
-if ! command -v sv > /dev/null 2>&1; then
+if ! command -v sv-enable > /dev/null 2>&1; then
     echo "Installing service bus..."
     pkg install termux-services -y
-    if ! command -v sv > /dev/null 2>&1; then
+    if ! command -v sv-enable > /dev/null 2>&1; then
         echo "ERROR: Failed to install termux-services" >&2
+        exit 1
+    else
+        echo "Termux Services has been installed. Restart Termux to continue."
         exit 1
     fi
 fi
 
-echo "Cloning Wyoming Satellite repo..."
-git clone https://github.com/rhasspy/wyoming-satellite.git
+if [ "$SKIP_WYOMING" = "0" ]; then
+    echo "Cloning Wyoming Satellite repo..."
+    git clone https://github.com/rhasspy/wyoming-satellite.git
 
-echo "Enter wyoming-satellite directory..."
-cd wyoming-satellite
+    echo "Enter wyoming-satellite directory..."
+    cd wyoming-satellite
 
-echo "Running Wyoming Satellite setup script..."
-echo "This process may appear to hang on low spec hardware. Do not exit unless you are sure that that the process is no longer responding"
-./script/setup
-cd ..
+    echo "Running Wyoming Satellite setup script..."
+    echo "This process may appear to hang on low spec hardware. Do not exit unless you are sure that that the process is no longer responding"
+    ./script/setup
+    cd ..
 
-echo "Write down the IP address (most likely starting with '192.') of your device, you should find it in the following output, press enter once complete:"
-ifconfig | grep 'inet'
-read
+    echo "Write down the IP address (most likely starting with '192.') of your device, you should find it in the following output, press enter once complete:"
+    ifconfig | grep 'inet'
+    read
 
-echo "Setting up autostart..."
-mkdir -p ~/.termux/boot/
-wget -P ~/.termux/boot/ "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/services-autostart"
-chmod +x ~/.termux/boot/services-autostart
+    echo "Setting up autostart..."
+    mkdir -p ~/.termux/boot/
+    wget -P ~/.termux/boot/ "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/services-autostart"
+    chmod +x ~/.termux/boot/services-autostart
 
-echo "Setting up wyoming service..."
-mkdir -p $PREFIX/var/service/wyoming/
-wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/wyoming-satellite-android" -O $PREFIX/var/service/wyoming/run
-chmod +x $PREFIX/var/service/wyoming/run
-sv enable wyoming
+    echo "Setting up wyoming service..."
+    mkdir -p $PREFIX/var/service/wyoming/
+    mkdir -p $PREFIX/var/service/wyoming/log
+    ln -sf $PREFIX/share/termux-services/svlogger $PREFIX/var/service/wyoming/log/run
+    wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/wyoming-satellite-android" -O $PREFIX/var/service/wyoming/run
+    chmod +x $PREFIX/var/service/wyoming/run
+    sv enable wyoming
 
-echo "Would you like to set a custom device name? [y/N]"
-read setup_device_name
-if [ "$setup_device_name" = "y" ] || [ "$setup_device_name" = "Y" ]; then
-    echo "Provide the full name and press enter"
-    read device_name
-    sed -i "s/^export CUSTOM_DEV_NAME=false$/export CUSTOM_DEV_NAME=$device_name/" $PREFIX/var/service/wyoming/run 
+    echo "Would you like to set a custom device name? [y/N]"
+    read setup_device_name
+    if [ "$setup_device_name" = "y" ] || [ "$setup_device_name" = "Y" ]; then
+        echo "Provide the full name and press enter"
+        read device_name
+        sed -i "s/^export CUSTOM_DEV_NAME=false$/export CUSTOM_DEV_NAME=$device_name/" $PREFIX/var/service/wyoming/run 
+    fi
+
+    echo "Successfully installed and set up Wyoming Satellite"
 fi
 
-echo "Successfully installed and set up Wyoming Satellite"
-echo "Install Wyoming OpenWakeWord as well? [y/N]"
-read install_oww
-if [ "$install_oww" = "y" ] || [ "$install_oww" = "Y" ]; then
+if [ "$SKIP_OWW" = "0" ]; then
     echo "Select the wake word you would like to use:"
     echo "1. Ok Nabu *"
     echo "2. Alexa"
@@ -198,7 +215,6 @@ if [ "$install_oww" = "y" ] || [ "$install_oww" = "Y" ]; then
     echo "4. Hey Jarvis"
     echo "5. Hey Rhasspy"
     read wake_word_option
-    SELECTED_WAKE_WORD=""
     if [ "$wake_word_option" = "1" ] || ["$wake_word_option" = "" ]; then
         SELECTED_WAKE_WORD="ok_nabu"
     elif [ "$wake_word_option" = "2" ]; then
