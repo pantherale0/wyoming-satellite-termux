@@ -278,8 +278,9 @@ if [ "$SKIP_OWW" = "0" ]; then
     cd ..
 fi
 
-if [ "$NO_AUTOSTART" = "1" ]; then
+if [ "$NO_AUTOSTART" = "" ]; then
     echo "Starting Wyoming service now..."
+    killall python3 # ensure no processes are running before starting the service
     sv up wyoming
 fi
 
