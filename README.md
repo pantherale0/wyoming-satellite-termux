@@ -6,14 +6,16 @@ This project provides a simple way of setting up Wyoming Satellite and OpenWakeW
 
 - Install [Termux](https://github.com/termux/termux-app) (open source terminal emulator app)
 - Install [Termux:API](https://github.com/termux/termux-api) (necessary to get mic access)
-- (Optional) Install [Termux:Boot](https://github.com/termux/termux-boot) and [open it once + disable battery optimization for Termux & Termux:Boot](https://wiki.termux.com/wiki/Termux:Boot) (only required if you want wyoming-satellite to autostart when your device restarts)
+- Install [Termux:Boot](https://github.com/termux/termux-boot) and [open it once + disable battery optimization for Termux & Termux:Boot](https://wiki.termux.com/wiki/Termux:Boot) (only required if you want wyoming-satellite to autostart when your device restarts)
+
+Install Termux via F-Droid or from the GitHub APKs. The version on Google Play should be treated as an unofficial fork [Termux Play Store](https://github.com/termux/termux-app/discussions/4000) as not all features are available in this version due to Google Play publishing policies.
 
 ### How to install
 
 For a default install, Open Termux and run:
 
 ``` Bash
-(command -v wget > /dev/null 2>&1 || (echo "Installing wget..." && pkg install -y wget)) && bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/install.sh)
+(command -v wget > /dev/null 2>&1 || (echo "Installing wget..." && pkg install -y wget)) && bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/setup.sh) --install
 
 ```
 
@@ -25,7 +27,11 @@ The default parameters will install Wyoming + OpenWakeWord, set the wake word to
 
 ### Command line parameters
 
-`--skip-uninstall`: Skip running uninstall and cleanup during installation
+`--install`: Install Wyoming and OpenWakeWord
+
+`--uninstall`: Cleanup and uninstall Wyoming and OpenWakeWord
+
+`--skip-cleanup`: Skip running uninstall and cleanup during installation
 
 `--skip-wyoming`: Skip installing the Wyoming Satellite
 
@@ -58,7 +64,7 @@ The default parameters will install Wyoming + OpenWakeWord, set the wake word to
 Open Termux and run:
 
 ``` Bash
-wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/uninstall.sh | bash
+bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/setup.sh) --uninstall
 ```
 
 ### Integrate into HomeAssistant
