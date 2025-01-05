@@ -26,20 +26,31 @@ The default parameters will install Wyoming + OpenWakeWord, set the wake word to
 ### Command line parameters
 
 `--skip-uninstall`: Skip running uninstall and cleanup during installation
+
 `--skip-wyoming`: Skip installing the Wyoming Satellite
+
 `--skip-wakeword`: Skip installing OpenWakeWord
+
 `--wake-word=...`: Specify a wakeword to use (defaults to Ok Nabu), must be a supported wakeword by the OpenWakeWord project
+
 `--device-name=`: Specify a custom device name to use (defaults to make + model of device)
+
 `--no-autostart`: Don't start Wyoming at the end of installation
+
 `--hide-post-instructions`: Hide instructions and recommended settings at the end of installation
+
 `--q`: Bypass additional prompts that require pressing the enter key to continue
 
 ### Supported wake word options
 
 `ok_nabu`: Ok Nabu (default)
+
 `alexa`: Alexa
+
 `hey_mycroft`: Hey Mycroft
+
 `hey_jarvis`: Hey Jarvis
+
 `hey_rhasspy`: Hey Rhasspy
 
 ### How to uninstall
