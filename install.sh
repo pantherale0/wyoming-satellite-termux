@@ -302,6 +302,10 @@ if [ "$HIDE_POST" = "1" ]; then
     echo "Mic Volume: 5.0"
     echo "Noise Suppression Level: Medium"
     echo "-----"
+    echo "Surface Go 2 (BlissOS 15)"
+    echo "Mic Volume: 3.0"
+    echo "Noise Suppresion Level: Medium"
+    echo "-----"
     echo "Press enter to exit"
     read
 fi
