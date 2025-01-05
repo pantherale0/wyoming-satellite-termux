@@ -160,11 +160,12 @@ echo "Enter wyoming-satellite directory..."
 cd wyoming-satellite
 
 echo "Running Wyoming Satellite setup script..."
+echo "This process may appear to hang on low spec hardware. Do not exit unless you are sure that that the process is no longer responding"
 ./script/setup
 cd ..
 
 echo "Write down the IP address (most likely starting with '192.') of your device, you should find it in the following output, press enter once complete:"
-ifconfig
+ifconfig | grep 'inet'
 read
 
 echo "Setting up autostart..."
