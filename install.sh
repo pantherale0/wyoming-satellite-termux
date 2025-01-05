@@ -175,8 +175,9 @@ chmod +x ~/.termux/boot/services-autostart
 
 echo "Setting up wyoming service..."
 mkdir -p $PREFIX/var/service/wyoming/
-wget -P $PREFIX/var/service/wyoming/run "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/wyoming-satellite-android"
-sv-enable wyoming
+wget -P $PREFIX/var/service/wyoming/ "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/wyoming-satellite-android" -O run
+chmod +x $PREFIX/var/service/wyoming/run
+sv enable wyoming
 
 echo "Would you like to set a custom device name? [y/N]"
 read setup_device_name
