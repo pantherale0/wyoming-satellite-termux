@@ -16,16 +16,18 @@ echo "Uninstalling custom pulseaudio build if it is installed..."
 if command -v pulseaudio > /dev/null 2>&1; then
     export ARCH="$(termux-info | grep -A 1 "CPU architecture:" | tail -1)" 
     echo "Architecture: $ARCH"
-    if [ "$ARCH" = "arm" ] ; then
+    if [ "$ARCH" = "arm" ]; then
         pkg remove -y pulseaudio
     fi
 fi
 
-echo "Would you like to remove Termux Services? [y/N]"
-read remove_services
-if [ "$remove_services" = "y" ] || [ "$remove_services" = "Y" ]; then
-    rm -f ~/.termux/boot/services-autostart
-    pkg uninstall termux-services -y
+if command -v sv > /dev/null 2>&1; then
+    echo "Would you like to remove Termux Services? [y/N]"
+    read remove_services
+    if [ "$remove_services" = "y" ] || [ "$remove_services" = "Y" ]; then
+        rm -f ~/.termux/boot/services-autostart
+        pkg uninstall termux-services -y
+    fi
 fi
 
 echo "Done"
