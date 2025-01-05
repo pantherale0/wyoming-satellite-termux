@@ -7,6 +7,7 @@ SELECTED_WAKE_WORD=""
 SELECTED_DEVICE_NAME=""
 NO_AUTOSTART=""
 HIDE_POST=""
+NO_INPUT=""
 
 for i in "$@"; do
   case $i in
@@ -38,6 +39,10 @@ for i in "$@"; do
       SKIP_OWW=1
       shift
       ;;
+    --q)
+      NO_INPUT=1
+      shift
+      ;;
     -*|--*)
       echo "Unknown option $i"
       exit 1
@@ -47,12 +52,14 @@ for i in "$@"; do
   esac
 done
 
-echo "At the end of this process a full reboot is recommended, ensure your device is completely powered down before starting back up"
-echo "This is to ensure that the require wakelocks will start correctly"
-echo "Press enter to continue, alternative press Q to exit"
-read quit
-if [ "$quit" = "q" ] || [ "$quit" = "Q" ]; then
-    exit 1
+if [ "$NO_INPUT" = "" ]; then
+    echo "At the end of this process a full reboot is recommended, ensure your device is completely powered down before starting back up"
+    echo "This is to ensure that the require wakelocks will start correctly"
+    echo "Press enter to continue, alternative press Q to exit"
+    read quit
+    if [ "$quit" = "q" ] || [ "$quit" = "Q" ]; then
+        exit 1
+    fi
 fi
 
 echo "Enter home directory"
@@ -203,7 +210,9 @@ if [ "$SKIP_WYOMING" = "0" ]; then
 
     echo "Write down the IP address (most likely starting with '192.') of your device, you should find it in the following output, press enter once complete:"
     ifconfig | grep 'inet'
-    read
+    if [ "$NO_INPUT" = "" ]; then
+        read
+    fi
 
     echo "Setting up autostart..."
     mkdir -p ~/.termux/boot/

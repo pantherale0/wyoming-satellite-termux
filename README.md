@@ -32,6 +32,15 @@ The default parameters will install Wyoming + OpenWakeWord, set the wake word to
 `--device-name=`: Specify a custom device name to use (defaults to make + model of device)
 `--no-autostart`: Don't start Wyoming at the end of installation
 `--hide-post-instructions`: Hide instructions and recommended settings at the end of installation
+`--q`: Bypass additional prompts that require pressing the enter key to continue
+
+### Supported wake word options
+
+`ok_nabu`: Ok Nabu (default)
+`alexa`: Alexa
+`hey_mycroft`: Hey Mycroft
+`hey_jarvis`: Hey Jarvis
+`hey_rhasspy`: Hey Rhasspy
 
 ### How to uninstall
 
@@ -61,3 +70,15 @@ wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux
 As this is a Wyoming Satellite, you should be able to start using just by saying your wake word that you configured during setup, for example, say "Alexa, What is the time" and the device should pickup and respond using you default Assist pipeline in Home Assistant. 
 
 The Assist pipeline can be changed in Home Assistant, look for the entity under Integrations > Wyoming > `Device Name` > Assistant
+
+### Supported devices
+
+- Lenovo ThinkSmart View
+
+Ensure you have completely restarted the device once setup is complete, Wyoming should autostart.
+
+### Devices not supported
+
+- Lenovo Smart Clock 2
+
+Setup is successful, however the Wyoming Satellite service crashes with `Bad system call`. The wake word service appears to run correctly.
