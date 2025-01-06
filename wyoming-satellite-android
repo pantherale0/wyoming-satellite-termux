@@ -63,6 +63,6 @@ stdbuf -oL -eL python3 ./script/run \
 --awake-wav "$WAKESOUND" \
 --done-wav "$DONESOUND" \
 --timer-finished-wav "$TIMERFINISHEDSOUND" \
---timer-finished-wav-repeat 5 0.5 \
+--timer-finished-wav-repeat $TIMERFINISHEDREPEAT \
 $OWW_FLAGS \
 --debug 2>&1 | tee -a "$HOME/wyoming-satellite.log"

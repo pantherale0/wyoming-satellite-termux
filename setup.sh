@@ -194,6 +194,7 @@ install_ssh () {
 install_squeezelite () {
     echo "allow-external-apps=true" >> ~/.termux/termux.properties
     pkg install squeezelite -y
+    echo "Squeezelite installed"
 }
 
 configure () {
@@ -356,8 +357,6 @@ install () {
         killall runsv
         echo "Waiting for runsv to restart"
         sleep 5
-        sv enable wyoming
-
         echo "Successfully installed and set up Wyoming Satellite"
     fi
 
@@ -375,6 +374,10 @@ install () {
         echo "Running Wyoming OpenWakeWord setup script..."
         ./script/setup
         cd ..
+    fi
+
+    if [ "$SKIP_SQUEEZELITE" = "0" ]; then
+        install_squeezelite
     fi
 
     if [ "$INSTALL_SSHD" = "1" ]; then
