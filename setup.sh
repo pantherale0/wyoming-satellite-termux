@@ -340,7 +340,7 @@ install () {
 
         echo "Setting up autostart..."
         mkdir -p ~/.termux/boot/
-        wget -P ~/.termux/boot/ "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/$BRANCH/main/services-autostart"
+        wget -P ~/.termux/boot/ "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/services-autostart"
         chmod +x ~/.termux/boot/services-autostart
 
         echo "Setting up wyoming service..."
