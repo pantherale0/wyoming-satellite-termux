@@ -350,6 +350,7 @@ install () {
         ln -sf $PREFIX/share/termux-services/svlogger $PREFIX/var/service/wyoming/log/run
         wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/wyoming-satellite-android" -O $PREFIX/var/service/wyoming/run
         chmod +x $PREFIX/var/service/wyoming/run
+        touch $PREFIX/var/service/wyoming/down # ensure the service does not start when we kill runsv
 
         configure
 
@@ -391,6 +392,7 @@ install () {
         killall python3 # ensure no processes are running before starting the service
         sv up wyoming
     fi
+    sv-enable wyoming
 }
 
 if [ "$MODE" = "INSTALL" ]; then
