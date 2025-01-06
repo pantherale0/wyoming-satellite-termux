@@ -2,6 +2,10 @@
 export OWW_ENABLED=false
 export SELECTED_WAKE_WORD=false
 export CUSTOM_DEV_NAME="false"
+export WAKESOUND=false
+export DONESOUND=false
+export TIMERFINISHEDSOUND=false
+export TIMERFINISHEDREPEAT=false
 
 wlog() {
     local message="$1"
@@ -21,7 +25,7 @@ if ! command -v rec > /dev/null 2>&1 || ! command -v play > /dev/null 2>&1; then
     fi
 fi
 
-if [ "$CUSTOM_DEV_NAME" = "false" ]; then
+if [ "$CUSTOM_DEV_NAME" = "" ]; then
     export TERMUX_INFO="$(termux-info)"
     export MANUFACTURER_NAME="$(echo "$TERMUX_INFO" | grep -A 1 "Device manufacturer:" | tail -1)"
     export MODEL_NAME="$(echo "$TERMUX_INFO" | grep -A 1 "Device model:" | tail -1)"
@@ -56,9 +60,9 @@ stdbuf -oL -eL python3 ./script/run \
 --uri 'tcp://0.0.0.0:10700' \
 --mic-command 'rec -r 16000 -c 1 -b 16 -e signed-integer -t raw --no-show-progress -' \
 --snd-command 'play -r 22050 -c 1 -b 16 -e signed-integer -t raw --no-show-progress -' \
---awake-wav ./sounds/awake.wav \
---done-wav ./sounds/done.wav \
---timer-finished-wav ./sounds/timer_finished.wav \
+--awake-wav "$WAKESOUND" \
+--done-wav "$DONESOUND" \
+--timer-finished-wav "$TIMERFINISHEDSOUND" \
 --timer-finished-wav-repeat 5 0.5 \
 $OWW_FLAGS \
 --debug 2>&1 | tee -a "$HOME/wyoming-satellite.log"

@@ -3,12 +3,21 @@
 SKIP_UNINSTALL=0
 SKIP_WYOMING=0
 SKIP_OWW=0
-SELECTED_WAKE_WORD=""
+SKIP_SQUEEZELITE=0
+SELECTED_WAKE_WORD="ok_nabu"
 SELECTED_DEVICE_NAME=""
 NO_AUTOSTART=""
 HIDE_POST=""
 NO_INPUT=""
 MODE=""
+INSTALL_SSHD=""
+BRANCH="merged"
+
+# Wake sounds
+SELECTED_WAKE_SOUND="./sounds/awake.wav"
+SELECTED_DONE_SOUND="./sounds/done.wav"
+SELECTED_TIMER_DONE_SOUND="./sounds/timer_finished.wav"
+SELECTED_TIMER_REPEAT="5 0.5"
 
 for i in "$@"; do
   case $i in
@@ -17,7 +26,27 @@ for i in "$@"; do
       shift
       ;;
     --device-name=*)
-      SELECTED_WAKE_WORD="${i#*=}"
+      SELECTED_DEVICE_NAME="${i#*=}"
+      shift
+      ;;
+    --wake-sound=*)
+      SELECTED_WAKE_SOUND="${i#*=}"
+      shift
+      ;;
+    --done-sound=*)
+      SELECTED_DONE_SOUND="${i#*=}"
+      shift
+      ;;
+    --timer-finished-sound=*)
+      SELECTED_TIMER_DONE_SOUND="${i#*=}"
+      shift
+      ;;
+    --timer-finished-repeat=*)
+      SELECTED_TIMER_REPEAT="${i#*=}"
+      shift
+      ;;
+    --branch=*)
+      BRANCH="${i#*=}"
       shift
       ;;
     --install)
@@ -26,6 +55,10 @@ for i in "$@"; do
       ;;
     --uninstall)
       MODE="UNINSTALL"
+      shift
+      ;;
+    --configure)
+      MODE="CONFIGURE"
       shift
       ;;
     --no-autostart)
@@ -48,7 +81,15 @@ for i in "$@"; do
       SKIP_OWW=1
       shift
       ;;
-    --q)
+    --skip-squeezelite)
+      SKIP_SQUEEZELITE=1
+      shift
+      ;;
+    --install-ssh)
+      INSTALL_SSHD=1
+      shift
+      ;;
+    -q)
       NO_INPUT=1
       shift
       ;;
@@ -61,54 +102,10 @@ for i in "$@"; do
   esac
 done
 
-cleanup () {
-    echo "Stopping and killing any remaining Wyoming instances"
-    sv down wyoming
-    killall python3
-    sv-disable wyoming
+echo "Mode: $BRANCH"
 
-    echo "Deleting files and directories related to the project..."
-    rm -f ~/tmp.wav
-    rm -f ~/pulseaudio-without-memfd.deb 
-    rm -f ~/.termux/boot/services-autostart
-    rm -rf $PREFIX/var/service/wyoming
-    rm -rf ~/wyoming-satellite
-    rm -rf ~/wyoming-openwakeword
-}
-
-uninstall () {
-    echo "Uninstalling custom pulseaudio build if it is installed..."
-    if command -v pulseaudio > /dev/null 2>&1; then
-        export ARCH="$(termux-info | grep -A 1 "CPU architecture:" | tail -1)" 
-        echo "Architecture: $ARCH"
-        if [ "$ARCH" = "arm" ]; then
-            pkg remove -y pulseaudio
-        fi
-    fi
-
-    if [ "$MODE" = "UNINSTALL" ]; then
-        if command -v sv > /dev/null 2>&1; then
-            echo "Would you like to remove Termux Services? [y/N]"
-            read remove_services
-            if [ "$remove_services" = "y" ] || [ "$remove_services" = "Y" ]; then
-                pkg uninstall termux-services -y
-            fi
-        fi
-    fi
-}
-
-if [ "$MODE" = "INSTALL" ]; then
-
-    if [ "$NO_INPUT" = "" ]; then
-        echo "At the end of this process a full reboot is recommended, ensure your device is completely powered down before starting back up"
-        echo "This is to ensure that the require wakelocks will start correctly"
-        echo "Press enter to continue, alternative press Q to exit"
-        read quit
-        if [ "$quit" = "q" ] || [ "$quit" = "Q" ]; then
-            exit 1
-        fi
-    fi
-
+preinstall () {
+    echo "Running pre-install"
     echo "Enter home directory"
     cd ~
 
@@ -135,9 +132,37 @@ if [ "$MODE" = "INSTALL" ]; then
         fi
     fi
 
-    if [ "$SKIP_UNINSTALL" = "0" ]; then
-        echo "Clean up potential garbage that might otherwise get in the way..."
-        cleanup
+    echo "Ensure git is available..."
+    if ! command -v git > /dev/null 2>&1; then
+        echo "Installing git..."
+        pkg install git -y
+        if ! command -v git > /dev/null 2>&1; then
+            echo "ERROR: Failed to install git" >&2
+            exit 1
+        fi
+    fi
+
+    echo "Ensure Termux Services is available..."
+    if ! command -v sv-enable > /dev/null 2>&1; then
+        echo "Installing service bus..."
+        pkg install termux-services -y
+        if ! command -v sv-enable > /dev/null 2>&1; then
+            echo "ERROR: Failed to install termux-services" >&2
+            exit 1
+        else
+            echo "Termux Services has been installed. Restart Termux to continue."
+            exit 1
+        fi
+    fi
+
+    echo "Ensure termux-api is available..."
+    if ! command -v termux-microphone-record > /dev/null 2>&1; then
+        echo "Installing termux-api..."
+        pkg install termux-api -y
+        if ! command -v termux-microphone-record > /dev/null 2>&1; then
+            echo "ERROR: Failed to install termux-api (termux-microphone-record not found)" >&2
+            exit 1
+        fi
     fi
 
     echo "Ensure sox is available..."
@@ -154,15 +179,90 @@ if [ "$MODE" = "INSTALL" ]; then
         fi
     fi
 
-    echo "Ensure termux-api is available..."
-    if ! command -v termux-microphone-record > /dev/null 2>&1; then
-        echo "Installing termux-api..."
-        pkg install termux-api -y
-        if ! command -v termux-microphone-record > /dev/null 2>&1; then
-            echo "ERROR: Failed to install termux-api (termux-microphone-record not found)" >&2
+    if [ "$SKIP_UNINSTALL" = "0" ]; then
+        echo "Clean up potential garbage that might otherwise get in the way..."
+        cleanup
+    fi
+
+}
+
+install_ssh () {
+    pkg install openssh -y
+    sshd
+}
+
+install_squeezelite () {
+    echo "allow-external-apps=true" >> ~/.termux/termux.properties
+    pkg install squeezelite -y
+}
+
+configure () {
+    echo "Configuring Wyoming options..."
+    sed -i "s|^export CUSTOM_DEV_NAME=.*$|export CUSTOM_DEV_NAME=\"$SELECTED_DEVICE_NAME\"|g" $PREFIX/var/service/wyoming/run 
+    sed -i "s|^export WAKESOUND=.*$|export WAKESOUND=\"$SELECTED_WAKE_SOUND\"|g" $PREFIX/var/service/wyoming/run
+    sed -i "s|^export DONESOUND=.*$|export DONESOUND=\"$SELECTED_DONE_SOUND\"|g" $PREFIX/var/service/wyoming/run
+    sed -i "s|^export TIMERFINISHEDSOUND=.*|export TIMERFINISHEDSOUND=\"$SELECTED_TIMER_DONE_SOUND\"|g" $PREFIX/var/service/wyoming/run
+    sed -i "s|^export TIMERFINISHEDREPEAT=.*$|export TIMERFINISHEDREPEAT=\"$SELECTED_TIMER_REPEAT\"|g" $PREFIX/var/service/wyoming/run
+
+    echo "Configuring OpenWakeWord..."
+    # OWW
+    sed -i "s/^export SELECTED_WAKE_WORD=.*$/export SELECTED_WAKE_WORD=\"$SELECTED_WAKE_WORD\"/" $PREFIX/var/service/wyoming/run
+    if [ "$SKIP_OWW" = "0" ]; then
+        sed -i 's/^export OWW_ENABLED=.*$/export OWW_ENABLED=true/' $PREFIX/var/service/wyoming/run
+    fi
+}
+
+cleanup () {
+    echo "Stopping and killing any remaining Wyoming instances"
+    sv down wyoming
+    killall python3
+    sv-disable wyoming
+
+    echo "Deleting files and directories related to the project..."
+    rm -f ~/tmp.wav
+    rm -f ~/pulseaudio-without-memfd.deb 
+    rm -f ~/.termux/boot/services-autostart
+    rm -rf $PREFIX/var/service/wyoming
+    rm -rf ~/wyoming-satellite
+    rm -rf ~/wyoming-openwakeword
+
+    echo "Removing squeezelite"
+    pkg remove squeezelite -y
+}
+
+uninstall () {
+    echo "Uninstalling custom pulseaudio build if it is installed..."
+    if command -v pulseaudio > /dev/null 2>&1; then
+        export ARCH="$(termux-info | grep -A 1 "CPU architecture:" | tail -1)" 
+        echo "Architecture: $ARCH"
+        if [ "$ARCH" = "arm" ]; then
+            pkg remove -y pulseaudio
+        fi
+    fi
+
+    if [ "$MODE" = "UNINSTALL" ]; then
+        if command -v sv > /dev/null 2>&1; then
+            echo "Would you like to remove Termux Services? [y/N]"
+            read remove_services
+            if [ "$remove_services" = "y" ] || [ "$remove_services" = "Y" ]; then
+                pkg uninstall termux-services -y
+            fi
+        fi
+    fi
+}
+
+install () {
+    if [ "$NO_INPUT" = "" ]; then
+        echo "At the end of this process a full reboot is recommended, ensure your device is completely powered down before starting back up"
+        echo "This is to ensure that the require wakelocks will start correctly"
+        echo "Press enter to continue, alternative press Q to exit"
+        read quit
+        if [ "$quit" = "q" ] || [ "$quit" = "Q" ]; then
             exit 1
         fi
     fi
+
+    preinstall
 
     echo "Starting a wakelock"
     termux-wake-lock
@@ -217,29 +317,6 @@ if [ "$MODE" = "INSTALL" ]; then
         echo "ERROR: No microphone detected" >&2
     fi
 
-    echo "Ensure git is available..."
-    if ! command -v git > /dev/null 2>&1; then
-        echo "Installing git..."
-        pkg install git -y
-        if ! command -v git > /dev/null 2>&1; then
-            echo "ERROR: Failed to install git" >&2
-            exit 1
-        fi
-    fi
-
-    echo "Ensure Termux Services is available..."
-    if ! command -v sv-enable > /dev/null 2>&1; then
-        echo "Installing service bus..."
-        pkg install termux-services -y
-        if ! command -v sv-enable > /dev/null 2>&1; then
-            echo "ERROR: Failed to install termux-services" >&2
-            exit 1
-        else
-            echo "Termux Services has been installed. Restart Termux to continue."
-            exit 1
-        fi
-    fi
-
     if [ "$SKIP_WYOMING" = "0" ]; then
         echo "Cloning Wyoming Satellite repo..."
         git clone https://github.com/rhasspy/wyoming-satellite.git
@@ -263,49 +340,28 @@ if [ "$MODE" = "INSTALL" ]; then
 
         echo "Setting up autostart..."
         mkdir -p ~/.termux/boot/
-        wget -P ~/.termux/boot/ "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/services-autostart"
+        wget -P ~/.termux/boot/ "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/$BRANCH/main/services-autostart"
         chmod +x ~/.termux/boot/services-autostart
 
         echo "Setting up wyoming service..."
         mkdir -p $PREFIX/var/service/wyoming/
         mkdir -p $PREFIX/var/service/wyoming/log
         ln -sf $PREFIX/share/termux-services/svlogger $PREFIX/var/service/wyoming/log/run
-        wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/wyoming-satellite-android" -O $PREFIX/var/service/wyoming/run
+        wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/wyoming-satellite-android" -O $PREFIX/var/service/wyoming/run
         chmod +x $PREFIX/var/service/wyoming/run
+
+        configure
+
         echo "Wyoming service installed. Restarting runsv"
         killall runsv
         echo "Waiting for runsv to restart"
         sleep 5
         sv enable wyoming
 
-        if [ ! "$SELECTED_DEVICE_NAME" = "" ]; then
-            sed -i "s/^export CUSTOM_DEV_NAME=false$/export CUSTOM_DEV_NAME=$SELECTED_DEVICE_NAME/" $PREFIX/var/service/wyoming/run 
-        fi
-
         echo "Successfully installed and set up Wyoming Satellite"
     fi
 
     if [ "$SKIP_OWW" = "0" ]; then
-        if [ "$wake_word_option" = "" ]; then
-            echo "Select the wake word you would like to use:"
-            echo "1. Ok Nabu *"
-            echo "2. Alexa"
-            echo "3. Hey Mycroft"
-            echo "4. Hey Jarvis"
-            echo "5. Hey Rhasspy"
-            read wake_word_option
-            if [ "$wake_word_option" = "1" ] || ["$wake_word_option" = "" ]; then
-                SELECTED_WAKE_WORD="ok_nabu"
-            elif [ "$wake_word_option" = "2" ]; then
-                SELECTED_WAKE_WORD="alexa"
-            elif [ "$wake_word_option" = "3" ]; then
-                SELECTED_WAKE_WORD="hey_mycroft"
-            elif [ "$wake_word_option" = "4" ]; then
-                SELECTED_WAKE_WORD="hey_jarvis"
-            elif [ "$wake_word_option" = "5" ]; then
-                SELECTED_WAKE_WORD="hey_rhasspy"
-            fi
-        fi
         echo "Selected $SELECTED_WAKE_WORD"
         echo "Ensure python-tflite-runtime, ninja and patchelf are installed..."
         pkg install python-tflite-runtime ninja patchelf -y
@@ -318,11 +374,13 @@ if [ "$MODE" = "INSTALL" ]; then
         sed -i 's/\(builder = venv.EnvBuilder(with_pip=True\)/\1, system_site_packages=True/' ./script/setup
         echo "Running Wyoming OpenWakeWord setup script..."
         ./script/setup
-        echo "Ensuring OpenWakeWord is enabled..."
-        sed -i 's/^export OWW_ENABLED=false$/export OWW_ENABLED=true/' $PREFIX/var/service/wyoming/run 
-        echo "Setting configured wakeword..."
-        sed -i "s/^export SELECTED_WAKE_WORD=false$/export SELECTED_WAKE_WORD=$SELECTED_WAKE_WORD/" $PREFIX/var/service/wyoming/run
         cd ..
+    fi
+
+    if [ "$INSTALL_SSHD" = "1" ]; then
+        echo "Installing SSH server"
+        install_ssh
+        echo "SSH Server installed, running on port 8022"
     fi
 
     if [ "$NO_AUTOSTART" = "" ]; then
@@ -330,7 +388,12 @@ if [ "$MODE" = "INSTALL" ]; then
         killall python3 # ensure no processes are running before starting the service
         sv up wyoming
     fi
+}
 
+if [ "$MODE" = "INSTALL" ]; then
+
+    install
+    echo "Install complete"
     if [ "$HIDE_POST" = "1" ]; then
         clear
         echo "Install is now complete, the rest of the configuration can be performed in the Home Assistant UI"
@@ -363,6 +426,12 @@ if [ "$MODE" = "UNINSTALL" ]; then
     cleanup
     uninstall
     echo "Uninstall complete"
+    exit 0
+fi
+
+if [ "$MODE" = "CONFIGURE" ]; then
+    configure
+    echo "Reconfiguration complete"
     exit 0
 fi
 
