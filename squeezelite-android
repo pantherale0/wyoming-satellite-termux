@@ -1,5 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/sh
 
+export CUSTOM_DEV_NAME=""
+
 if [ "$CUSTOM_DEV_NAME" = "" ]; then
     export TERMUX_INFO="$(termux-info)"
     export MANUFACTURER_NAME="$(echo "$TERMUX_INFO" | grep -A 1 "Device manufacturer:" | tail -1)"
