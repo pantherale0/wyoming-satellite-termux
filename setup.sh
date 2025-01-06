@@ -346,11 +346,11 @@ install () {
 
         echo "Setting up wyoming service..."
         mkdir -p $PREFIX/var/service/wyoming/
+        touch $PREFIX/var/service/wyoming/down # ensure the service does not start when we kill runsv
         mkdir -p $PREFIX/var/service/wyoming/log
         ln -sf $PREFIX/share/termux-services/svlogger $PREFIX/var/service/wyoming/log/run
         wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/wyoming-satellite-android" -O $PREFIX/var/service/wyoming/run
         chmod +x $PREFIX/var/service/wyoming/run
-        touch $PREFIX/var/service/wyoming/down # ensure the service does not start when we kill runsv
 
         configure
 
@@ -379,6 +379,15 @@ install () {
 
     if [ "$SKIP_SQUEEZELITE" = "0" ]; then
         install_squeezelite
+        echo "Setting up squeezelite service..."
+        mkdir -p $PREFIX/var/service/squeezelite/
+        touch $PREFIX/var/service/squeezelite/down # ensure the service does not start until we are ready
+        mkdir -p $PREFIX/var/service/squeezelite/log
+        ln -sf $PREFIX/share/termux-services/svlogger $PREFIX/var/service/squeezelite/log/run
+        wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/squeezelite-android" -O $PREFIX/var/service/squeezelite/run
+        chmod +x $PREFIX/var/service/squeezelite/run
+        sed -i "s|^export CUSTOM_DEV_NAME=.*$|export CUSTOM_DEV_NAME=\"$SELECTED_DEVICE_NAME\"|g" $PREFIX/var/service/squeezelite/run 
+        sv-enable squeezelite
     fi
 
     if [ "$INSTALL_SSHD" = "1" ]; then
