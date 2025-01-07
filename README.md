@@ -118,10 +118,4 @@ The Assist pipeline can be changed in Home Assistant, look for the entity under 
 
 - Lenovo ThinkSmart View
 - Microsoft Surface Go 2 (BlissOS 15)
-
-### Devices not supported
-
 - Lenovo Smart Clock 2
-<pre>
-    Setup is successful, however the Wyoming Satellite service crashes with 'Bad system call'. The wake word service appears to run correctly.
-</pre>
