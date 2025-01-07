@@ -57,6 +57,7 @@ fi
 
 stdbuf -oL -eL python3 ./script/run \
 --name "$SATELLITE_NAME" \
+--no-zeroconf \
 --uri 'tcp://0.0.0.0:10700' \
 --mic-command 'rec -r 16000 -c 1 -b 16 -e signed-integer -t raw --no-show-progress -' \
 --snd-command 'play -r 22050 -c 1 -b 16 -e signed-integer -t raw --no-show-progress -' \
