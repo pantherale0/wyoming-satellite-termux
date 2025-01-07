@@ -215,7 +215,7 @@ install_events () {
     mkdir -p ~/wyoming-events
     wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/wyoming-events.py" -O ~/wyoming-events/wyoming-events.py
     echo "Configuring events"
-    python3 -m pip install wyoming # ensure required libs are installed
+    python3 -m pip install wyoming aiohttp # ensure required libs are installed
     sed -i "s|^export EVENTS_ENABLED=.*$|export EVENTS_ENABLED=true|" $PREFIX/var/service/wyoming/run
     sed -i "s|^export HASS_TOKEN=.*$|export HASS_TOKEN=\"$HASS_TOKEN\"|" $PREFIX/var/service/wyoming/run
     sed -i "s|^export HASS_URL=.*$|export HASS_URL=\"$HASS_URL\"|" $PREFIX/var/service/wyoming/run
