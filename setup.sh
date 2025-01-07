@@ -229,6 +229,9 @@ cleanup () {
 
     echo "Removing squeezelite"
     pkg remove squeezelite -y
+    sv down squeezelite
+    sv-disable squeezelite
+    rm -rf $PREFIX/var/service/squeezelite
 }
 
 uninstall () {
