@@ -325,8 +325,9 @@ install () {
         echo "Enter wyoming-satellite directory..."
         cd wyoming-satellite
 
-        echo "Installing Python Deps"
-        pip install -r requirements.txt
+        echo "Injecting faulthandler" # https://community.home-assistant.io/t/how-to-run-wyoming-satellite-and-openwakeword-on-android/777571/101?u=11harveyj
+        sed -i '/_LOGGER = logging.getLogger()/a import faulthandler, signal' wyoming_satellite/__main__.py
+        sed -i '/import faulthandler, signal/a faulthandler.register(signal.SIGSYS)' wyoming_satellite/__main__.py
 
         echo "Running Wyoming Satellite setup script..."
         echo "This process may appear to hang on low spec hardware. Do not exit unless you are sure that that the process is no longer responding"
