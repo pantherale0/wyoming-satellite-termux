@@ -6,6 +6,9 @@ export WAKESOUND=false
 export DONESOUND=false
 export TIMERFINISHEDSOUND=false
 export TIMERFINISHEDREPEAT=false
+export EVENTS_ENABLED=false
+export HASS_TOKEN=false
+export HASS_URL=false
 
 wlog() {
     local message="$1"
@@ -47,13 +50,21 @@ else
     export OWW_FLAGS=""
 fi
 
-wlog "Enter wyoming-satellite directory..."
-cd "$HOME/wyoming-satellite"
-
 wlog "Ensure module-sles-source is loaded..."
 if ! pactl list short modules | grep "module-sles-source" ; then
     pactl load-module module-sles-source
 fi
+
+if [ "$EVENTS_ENABLED" = "true" ]; then
+    export EVENTS_FLAGS="--event-uri tcp://127.0.0.1:10500"
+    export EVENT_HANDLER_FLAGS="--uri tcp://127.0.0.1:10500 --hass-token \"$HASS_TOKEN\" --hass-url \"$HASS_URL\""
+    wlog "Enter wyoming-events directory..."
+    cd "$HOME/wyoming-events"
+    stdbuf -oL -eL python3 ./wyoming-events.py $EVENT_HANDLER_FLAGS 2>&1 | tee -a "$HOME/wyoming-events.log" &
+fi
+
+wlog "Enter wyoming-satellite directory..."
+cd "$HOME/wyoming-satellite"
 
 stdbuf -oL -eL python3 ./script/run \
 --name "$SATELLITE_NAME" \
@@ -66,4 +77,5 @@ stdbuf -oL -eL python3 ./script/run \
 --timer-finished-wav "$TIMERFINISHEDSOUND" \
 --timer-finished-wav-repeat $TIMERFINISHEDREPEAT \
 $OWW_FLAGS \
+$EVENTS_FLAGS \
 --debug 2>&1 | tee -a "$HOME/wyoming-satellite.log"

@@ -1,17 +1,23 @@
 #!/data/data/com.termux/files/usr/bin/sh
 
+MODE=""
+BRANCH="merged"
+
+# Installer
+INSTALL_SSHD=""
+INSTALL_EVENTS="" # this doesn't do anything yet
+NO_AUTOSTART=""
+NO_INPUT=""
 SKIP_UNINSTALL=0
 SKIP_WYOMING=0
 SKIP_OWW=0
 SKIP_SQUEEZELITE=0
+
+# Config
 SELECTED_WAKE_WORD="ok_nabu"
 SELECTED_DEVICE_NAME=""
-NO_AUTOSTART=""
-HIDE_POST=""
-NO_INPUT=""
-MODE=""
-INSTALL_SSHD=""
-BRANCH="merged"
+HASS_TOKEN=""
+HASS_URL="http://homeassistant.local:8123"
 
 # Wake sounds
 SELECTED_WAKE_SOUND="./sounds/awake.wav"
@@ -49,6 +55,14 @@ for i in "$@"; do
       BRANCH="${i#*=}"
       shift
       ;;
+    --hass-token=*)
+      HASS_TOKEN="${i#*=}"
+      shift
+      ;;
+    --hass-url=*)
+      HASS_TOKEN="${i#*=}"
+      shift
+      ;;
     --install)
       MODE="INSTALL"
       shift
@@ -63,10 +77,6 @@ for i in "$@"; do
       ;;
     --no-autostart)
       NO_AUTOSTART=1
-      shift
-      ;;
-    --hide-post-instructions)
-      HIDE_POST=1
       shift
       ;;
     --skip-cleanup)
@@ -87,6 +97,10 @@ for i in "$@"; do
       ;;
     --install-ssh)
       INSTALL_SSHD=1
+      shift
+      ;;
+    --install-events)
+      INSTALL_EVENTS=1
       shift
       ;;
     -q)
@@ -197,6 +211,16 @@ install_squeezelite () {
     echo "Squeezelite installed"
 }
 
+install_events () {
+    mkdir -p ~/wyoming-events
+    wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/wyoming-events.py" -O ~/wyoming-events/wyoming-events.py
+    echo "Configuring events"
+    python3 -m pip install wyoming # ensure required libs are installed
+    sed -i "s|^export EVENTS_ENABLED=.*$|export EVENTS_ENABLED=true|" $PREFIX/var/service/wyoming/run
+    sed -i "s|^export HASS_TOKEN=.*$|export HASS_TOKEN=\"$HASS_TOKEN\"|" $PREFIX/var/service/wyoming/run
+    sed -i "s|^export HASS_URL=.*$|export HASS_URL=\"$HASS_URL\"|" $PREFIX/var/service/wyoming/run
+}
+
 configure () {
     echo "Configuring Wyoming options..."
     sed -i "s|^export CUSTOM_DEV_NAME=.*$|export CUSTOM_DEV_NAME=\"$SELECTED_DEVICE_NAME\"|g" $PREFIX/var/service/wyoming/run 
@@ -262,8 +286,20 @@ install () {
         echo "Press enter to continue, alternative press Q to exit"
         read quit
         if [ "$quit" = "q" ] || [ "$quit" = "Q" ]; then
-            exit 1
+            exit 0
         fi
+    fi
+
+    if [ "$HASS_URL" = "" ] && [ "$INSTALL_EVENTS" = "1" ]; then
+        echo "Missing --hass-url parameter"
+        echo "This argument is required with --install-events"
+        exit 2
+    fi
+
+    if [ "$HASS_TOKEN" = "" ] && [ "$INSTALL_EVENTS" = "1" ]; then
+        echo "Missing --hass-token parameter"
+        echo "This argument is required with --install-events"
+        exit 2
     fi
 
     preinstall
@@ -358,6 +394,12 @@ install () {
 
         configure
 
+        # events
+        if [ "$INSTALL_EVENTS" = "1" ]; then
+            echo "Events enabled"
+            install_events
+        fi
+
         echo "Wyoming service installed. Restarting runsv"
         killall runsv
         echo "Waiting for runsv to restart"
@@ -412,16 +454,15 @@ if [ "$MODE" = "INSTALL" ]; then
 
     install
     echo "Install complete"
-    if [ "$HIDE_POST" = "1" ]; then
-        clear
+    if [ "$NO_INPUT" = "" ]; then
         echo "Install is now complete, the rest of the configuration can be performed in the Home Assistant UI"
         echo "-----"
         echo "Setup the Wyoming platform (see readme for information). Use the IP address noted earlier with"
         echo "Port: 10700 (Wyoming Satellite)"
+        echo "If you configured the event forwarder, these will be available under 'wyoming_*'"
         echo "-----"
         echo "Press enter to continue"
         read
-        clear
         echo "Device options can now be set in the Home Assistant UI"
         echo "-----"
         echo "Recommended settings*"
@@ -453,5 +494,5 @@ if [ "$MODE" = "CONFIGURE" ]; then
     exit 0
 fi
 
-echo "Invalid mode specified, one of --install or --uninstall is required"
+echo "Invalid mode specified, one of --install or --uninstall or --configure is required"
 exit 1

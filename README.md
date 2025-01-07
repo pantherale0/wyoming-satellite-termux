@@ -72,11 +72,25 @@ To customize this behaviour, see configuration parameters below.
 
 `--install-ssh`: Install a SSH server (openssh) for remote commandline access
 
+`--install-events`: Install a Wyoming event forwarder to broadcast events onto the Home Assistant event bus
+
 `--no-autostart`: Don't start Wyoming at the end of installation
 
-`--hide-post-instructions`: Hide instructions and recommended settings at the end of installation
-
 `-q`: Bypass additional prompts that require pressing the enter key to continue
+
+#### Home Assistant Event Bus
+
+NOT TESTED!
+
+You can optionally install a forwarding service that will forward all Wyoming events onto the event bus.
+
+The following parameters are required:
+
+`--hass-url`: The local URL to your Home Assistant instance (for example, http://192.168.1.2:8123)
+
+`--hass-token`: The [long lived access token](https://community.home-assistant.io/t/how-to-get-long-lived-access-token/162159/5?u=11harveyj) to access your Home Assistant instance
+
+Logs will be available in the "wyoming-events.log" file
 
 ### How to uninstall
 
