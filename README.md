@@ -15,11 +15,10 @@ Install Termux via F-Droid or from the GitHub APKs. The version on Google Play s
 For a default install, Open Termux and run:
 
 ``` Bash
-(command -v wget > /dev/null 2>&1 || (echo "Installing wget..." && pkg install -y wget)) && bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/merged/setup.sh) --install
-
+(command -v wget > /dev/null 2>&1 || (echo "Installing wget..." && pkg install -y wget)) && bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/merged/setup.sh)
 ```
 
-The above script will configure dependancies and install Wyoming as a service inside of Termux. This will be set to auto start on boot.
+The above script will display a GUI based installer for this suite of applications.
 
 A wakelock will be used to keep the services operational in the background.
 
@@ -28,8 +27,6 @@ The default parameters will:
 2. Set the wake word to `Ok Nabu`
 3. Set the Home Assistant device name to the make and model of the Android device.
 4. Auto launch Wyoming and OpenWakeWord at the end of installation.
-
-To customize this behaviour, see configuration parameters below.
 
 ### Command line parameters
 
@@ -83,7 +80,7 @@ To customize this behaviour, see configuration parameters below.
 
 * **`-q`:** Bypass confirmation prompts that normally require pressing Enter to continue.
 
-#### Home Assistant Event Bus (**NOT TESTED!**)
+#### Home Assistant Event Bus
 
 Optionally, you can install a service to forward Wyoming events to your Home Assistant instance's event bus.
 
