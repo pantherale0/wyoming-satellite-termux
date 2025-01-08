@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import logging
 import time
+import json
 import sys
 from typing import cast
 from functools import partial
@@ -102,7 +103,9 @@ class WyomingEventHandler(AsyncEventHandler):
                 }
             ) as req:
                 if req.ok:
-                    data: list[dict[str, str]] = await req.json()
+                    data = await req.text()
+                    _LOGGER.info("Got response: %s", data)
+                    data: list[dict[str, str]] = json.loads(data)
                     if not isinstance(data, list):
                         return
                     filtered = [x for x in data if x == self.wyoming_name]
@@ -142,8 +145,11 @@ class WyomingEventHandler(AsyncEventHandler):
         """Handle an event from Wyoming."""
         _LOGGER.debug(event)
 
-        if self.device_id is None:
-            await self.async_retrieve_device_id()
+        try:
+            if self.device_id is None:
+                await self.async_retrieve_device_id()
+        except Exception as exc:
+            _LOGGER.error("Error: %s", exc)
 
         # Forward a Wyoming event to Home Assistant
         await self.async_fire_event(
