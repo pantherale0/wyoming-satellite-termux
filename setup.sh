@@ -61,7 +61,7 @@ for i in "$@"; do
       shift
       ;;
     --hass-url=*)
-      HASS_TOKEN="${i#*=}"
+      HASS_URL="${i#*=}"
       shift
       ;;
     --install)
