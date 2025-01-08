@@ -92,6 +92,27 @@ The following parameters are required:
 
 Logs will be available in the "wyoming-events.log" file
 
+#### Available events:
+
+| Event Type | Event Description | Extra Event Data |
+|---|---|---|
+| wyoming_satellite-connected | Satellite has connected to Home Assistant | |
+| wyoming_run-satellite | Satellite has started | |
+| wyoming_streaming-stopped | Satellite has stopped streaming audio to or from Home Assistant | |
+| wyoming_run-pipeline | Satellite has started a new pipeline run | |
+| wyoming_detection | Wakeword detection event | `name`, `timestamp` |
+| wyoming_streaming-started | Satellite has started to stream audio to or from Home Assistant | |
+| wyoming_transcribe | Transcribe request started | `language` |
+| wyoming_voice-started | Voice detected | |
+| wyoming_voice-stopped | Voice finished | |
+| wyoming_transcript | Transcribe response (intent) | `text` |
+| wyoming_synthesize | Response from Assist Pipeline | `text`, `voice` |
+| wyoming_audio-start | Audio playback started | `rate`, `width`, `channels`, `timestamp` |
+| wyoming_audio-stop | Audio playback stopped | |
+| wyoming_played | Audio playback finished | |
+
+And any other event from Wyoming.
+
 ### How to uninstall
 
 Open Termux and run:
