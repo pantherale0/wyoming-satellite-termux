@@ -316,24 +316,24 @@ install_events () {
     python3 -m pip install wyoming aiohttp # ensure required libs are installed
     make_service "wyoming-events" "wyoming-events-android"
     sed -i "s|^export EVENTS_ENABLED=.*$|export EVENTS_ENABLED=true|" $PREFIX/var/service/wyoming-events/run
-    sed -i "s|^export EVENTS_ENABLED=.*$|export EVENTS_ENABLED=true|" $PREFIX/var/service/wyoming/run
+    sed -i "s|^export EVENTS_ENABLED=.*$|export EVENTS_ENABLED=true|" $PREFIX/var/service/wyoming-satellite/run
     sed -i "s|^export HASS_TOKEN=.*$|export HASS_TOKEN=\"$HASS_TOKEN\"|" $PREFIX/var/service/wyoming-events/run
     sed -i "s|^export HASS_URL=.*$|export HASS_URL=\"$HASS_URL\"|" $PREFIX/var/service/wyoming-events/run
 }
 
 configure () {
     echo "Configuring Wyoming options..."
-    sed -i "s|^export CUSTOM_DEV_NAME=.*$|export CUSTOM_DEV_NAME=\"$SELECTED_DEVICE_NAME\"|g" $PREFIX/var/service/wyoming/run 
-    sed -i "s|^export WAKESOUND=.*$|export WAKESOUND=\"$SELECTED_WAKE_SOUND\"|g" $PREFIX/var/service/wyoming/run
-    sed -i "s|^export DONESOUND=.*$|export DONESOUND=\"$SELECTED_DONE_SOUND\"|g" $PREFIX/var/service/wyoming/run
-    sed -i "s|^export TIMERFINISHEDSOUND=.*|export TIMERFINISHEDSOUND=\"$SELECTED_TIMER_DONE_SOUND\"|g" $PREFIX/var/service/wyoming/run
-    sed -i "s|^export TIMERFINISHEDREPEAT=.*$|export TIMERFINISHEDREPEAT=\"$SELECTED_TIMER_REPEAT\"|g" $PREFIX/var/service/wyoming/run
+    sed -i "s|^export CUSTOM_DEV_NAME=.*$|export CUSTOM_DEV_NAME=\"$SELECTED_DEVICE_NAME\"|g" $PREFIX/var/service/wyoming-satellite/run 
+    sed -i "s|^export WAKESOUND=.*$|export WAKESOUND=\"$SELECTED_WAKE_SOUND\"|g" $PREFIX/var/service/wyoming-satellite/run
+    sed -i "s|^export DONESOUND=.*$|export DONESOUND=\"$SELECTED_DONE_SOUND\"|g" $PREFIX/var/service/wyoming-satellite/run
+    sed -i "s|^export TIMERFINISHEDSOUND=.*|export TIMERFINISHEDSOUND=\"$SELECTED_TIMER_DONE_SOUND\"|g" $PREFIX/var/service/wyoming-satellite/run
+    sed -i "s|^export TIMERFINISHEDREPEAT=.*$|export TIMERFINISHEDREPEAT=\"$SELECTED_TIMER_REPEAT\"|g" $PREFIX/var/service/wyoming-satellite/run
 
     echo "Configuring OpenWakeWord..."
     # OWW
-    sed -i "s/^export SELECTED_WAKE_WORD=.*$/export SELECTED_WAKE_WORD=\"$SELECTED_WAKE_WORD\"/" $PREFIX/var/service/wyoming/run
+    sed -i "s/^export SELECTED_WAKE_WORD=.*$/export SELECTED_WAKE_WORD=\"$SELECTED_WAKE_WORD\"/" $PREFIX/var/service/wyoming-satellite/run
     if [ "$INSTALL_OWW" = "1" ]; then
-        sed -i 's/^export OWW_ENABLED=.*$/export OWW_ENABLED=true/' $PREFIX/var/service/wyoming/run
+        sed -i 's/^export OWW_ENABLED=.*$/export OWW_ENABLED=true/' $PREFIX/var/service/wyoming-satellite/run
     fi
 }
 
@@ -392,7 +392,7 @@ make_service () {
     mkdir -p $PREFIX/var/service/$SVC_NAME/log
     ln -sf $PREFIX/share/termux-services/svlogger $PREFIX/var/service/$SVC_NAME/log/run
     wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/services/$SVC_RUN_FILE" -O $PREFIX/var/service/$SVC_NAME/run
-    chmod +x $PREFIX/var/service/wyoming/run
+    chmod +x $PREFIX/var/service/$SVC_NAME/run
     echo "Installed $SVC_NAME service"
 }
 
