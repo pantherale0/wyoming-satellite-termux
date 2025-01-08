@@ -352,7 +352,6 @@ cleanup () {
     rm -f ~/tmp.wav
     rm -f ~/pulseaudio-without-memfd.deb 
     rm -f ~/.termux/boot/services-autostart
-    rm -rf $PREFIX/var/service/wyoming
     rm -rf ~/wyoming-satellite
     rm -rf ~/wyoming-openwakeword
 
