@@ -107,7 +107,12 @@ class WyomingEventHandler(AsyncEventHandler):
                     filtered = [x for x in data if x == self.wyoming_name]
                     if len(filtered) > 0:
                         self.device_id = filtered[0]
+                        _LOGGER.info("Initialized with device %s", self.device_id)
+                        return
+                    _LOGGER.warning("Unable to find a device matching this satellite.")
                     return
+                else:
+                    _LOGGER.error("Device lookup request failed %s", req.status)
                 return
 
     async def async_fire_event(self, event_type: str, event_data: dict) -> str:
