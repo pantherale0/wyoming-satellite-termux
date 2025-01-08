@@ -57,7 +57,7 @@ fi
 
 if [ "$EVENTS_ENABLED" = "true" ]; then
     export EVENTS_FLAGS="--event-uri tcp://127.0.0.1:10500"
-    export EVENT_HANDLER_FLAGS="--uri tcp://127.0.0.1:10500 --hass-token \"$HASS_TOKEN\" --hass-url \"$HASS_URL\""
+    export EVENT_HANDLER_FLAGS="--uri tcp://127.0.0.1:10500 --hass-token \"$HASS_TOKEN\" --hass-url \"$HASS_URL\" --wyoming-name \"$SATELLITE_NAME\""
     wlog "Enter wyoming-events directory..."
     cd "$HOME/wyoming-events"
     stdbuf -oL -eL python3 ./wyoming-events.py $EVENT_HANDLER_FLAGS 2>&1 | tee -a "$HOME/wyoming-events.log" &

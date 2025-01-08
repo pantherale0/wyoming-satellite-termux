@@ -12,6 +12,7 @@ SKIP_UNINSTALL=0
 SKIP_WYOMING=0
 SKIP_OWW=0
 SKIP_SQUEEZELITE=0
+INTERACTIVE=0
 
 # Config
 SELECTED_WAKE_WORD="ok_nabu"
@@ -105,6 +106,10 @@ for i in "$@"; do
       ;;
     -q)
       NO_INPUT=1
+      shift
+      ;;
+    -i)
+      INTERACTIVE=1
       shift
       ;;
     -*|--*)

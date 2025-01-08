@@ -17,11 +17,33 @@ from wyoming.server import AsyncEventHandler, AsyncServer
 
 _LOGGER = logging.getLogger()
 
+DEVICE_LOOKUP_TEMPLATE = """
+{% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq',None) | list %}
+{%- set ns = namespace(devices = []) %}
+{%- for device in devices %}
+  {%- set name = device_attr(device, "name") %}
+  {%- set idents = device_attr(device, "identifiers") %}
+  {% if idents|list|count > 0 %}
+  {% if name and "Android" in name and " - " in name and "wyoming" in idents|list|first %}
+  {%- set entities = device_entities(device) | list %}
+  {%- set data = {
+  "id": device,
+  "name": name,
+  } %}
+  {%- if entities %}
+    {%- set ns.devices = ns.devices + [ data ] %}
+  {%- endif %}
+  {%- endif %}
+  {%- endif %}
+{%- endfor %}
+{{ ns.devices }}"""
+
 async def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--uri", required=True, help="unix:// or tcp://")
     parser.add_argument("--hass-token", required=True, help="Longlived access token from HASS")
+    parser.add_argument("--wyoming-name", required=True, help="The name of the Wyoming device")
     parser.add_argument(
         "--hass-url",
         required=False,
@@ -56,8 +78,37 @@ class WyomingEventHandler(AsyncEventHandler):
         super().__init__(*args, **kwargs)
         self.cli_args = cli_args
         self.client_id = str(time.monotonic_ns())
+        self.wyoming_name = cli_args.wyoming_name
+        self.device_id = None
 
         _LOGGER.debug("Client connected: %s", self.client_id)
+
+    async def async_retrieve_device_id(self):
+        """Returns and stores the device ID."""
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url=join(
+                    self.cli_args.hass_url,
+                    "api",
+                    "template"
+                ),
+                json={
+                    "template": DEVICE_LOOKUP_TEMPLATE
+                },
+                headers={
+                    "Authorization": f"Bearer {self.cli_args.hass_token}",
+                    "Content-Type": "application/json",
+                }
+            ) as req:
+                if req.ok:
+                    data: list[dict[str, str]] = await req.json()
+                    if not isinstance(data, list):
+                        return
+                    filtered = [x for x in data if x == self.wyoming_name]
+                    if len(filtered) > 0:
+                        self.device_id = filtered[0]
+                    return
+                return
 
     async def async_fire_event(self, event_type: str, event_data: dict) -> str:
         """Fire event on Home Assistant event bus"""
@@ -69,7 +120,10 @@ class WyomingEventHandler(AsyncEventHandler):
                     "events",
                     event_type
                 ),
-                json=event_data,
+                json={
+                    **event_data,
+                    "device": self.device_id
+                },
                 headers={
                     "Authorization": f"Bearer {self.cli_args.hass_token}",
                     "Content-Type": "application/json",
@@ -81,6 +135,9 @@ class WyomingEventHandler(AsyncEventHandler):
     async def handle_event(self, event: Event) -> bool:
         """Handle an event from Wyoming."""
         _LOGGER.debug(event)
+
+        if self.device_id is None:
+            await self.async_retrieve_device_id()
 
         # Forward a Wyoming event to Home Assistant
         await self.async_fire_event(
