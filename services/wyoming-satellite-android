@@ -6,6 +6,7 @@ export WAKESOUND=false
 export DONESOUND=false
 export TIMERFINISHEDSOUND=false
 export TIMERFINISHEDREPEAT=false
+export EVENTS_ENABLED=true
 
 wlog() {
     local message="$1"
