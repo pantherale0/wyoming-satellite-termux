@@ -91,6 +91,7 @@ fi
 
 if [ "$COMMAND" = "UPDATECLI" ]; then
   echo "Updating Wyoming CLI"
+  rm -f $PREFIX/bin/wyoming-cli
   wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/scripts/wyoming-cli" -O $PREFIX/bin/wyoming-cli
   chmod a+x $PREFIX/bin/wyoming-cli
 fi
