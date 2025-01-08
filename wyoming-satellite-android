@@ -35,10 +35,10 @@ if [ "$CUSTOM_DEV_NAME" = "" ]; then
     if [ "$MANUFACTURER_NAME $MODEL_NAME" = " " ]; then 
         export SATELLITE_NAME="Android Satellite"
     else
-        export SATELLITE_NAME="Android Satellite - $MANUFACTURER_NAME $MODEL_NAME"
+        export SATELLITE_NAME="$MANUFACTURER_NAME $MODEL_NAME"
     fi
 else
-    export SATELLITE_NAME="Android Satellite - $CUSTOM_DEV_NAME"
+    export SATELLITE_NAME="$CUSTOM_DEV_NAME"
 fi
 
 if [ "$OWW_ENABLED" = "true" ]; then

@@ -213,6 +213,12 @@ EOF
     clear
 }
 
+interactive_ip_addr () {
+    MESSAGE=$(ifconfig | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
+    $DIALOG --title "IP Address" --backtitle "$INTERACTIVE_TITLE" --msgbox "$MESSAGE" 20 60
+    clear
+}
+
 preinstall () {
     echo "Running pre-install"
     echo "Enter home directory"
@@ -468,10 +474,8 @@ EOF
         ./script/setup
         cd ..
 
-        echo "Write down the IP address (most likely starting with '192.') of your device, you should find it in the following output, press enter once complete:"
-        ifconfig | grep 'inet'
         if [ "$NO_INPUT" = "" ]; then
-            read
+            interactive_ip_addr
         fi
 
         echo "Setting up autostart..."
