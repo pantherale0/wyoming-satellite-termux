@@ -1,12 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/sh
-export OWW_ENABLED=false
-export SELECTED_WAKE_WORD=false
-export CUSTOM_DEV_NAME="false"
-export WAKESOUND=false
-export DONESOUND=false
-export TIMERFINISHEDSOUND=false
-export TIMERFINISHEDREPEAT=false
-export EVENTS_ENABLED=true
+. $HOME/wyoming.conf)
+export VERSION=1
 
 wlog() {
     local message="$1"

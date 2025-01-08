@@ -1,8 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/sh
-export EVENTS_ENABLED=false
-export HASS_TOKEN=false
-export HASS_URL=false
-export CUSTOM_DEV_NAME="false"
+. $HOME/wyoming.conf)
+export VERSION=1
 
 wlog() {
     local message="$1"

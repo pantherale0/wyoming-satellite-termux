@@ -68,6 +68,14 @@ disable_services () {
   killall python3
 }
 
+update_service () {
+  local SVC_NAME="$1"
+  local SVC_RUN_FILE="$2"
+  rm -f "$PREFIX/var/service/$SVC_NAME/run"
+  wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/services/$SVC_RUN_FILE" -O $PREFIX/var/service/$SVC_NAME/run
+  chmod +x $PREFIX/var/service/$SVC_NAME/run
+}
+
 if [ "$COMMAND" = "RESTART" ]; then
   echo "Stopping Wyoming services"
   disable_services
@@ -122,6 +130,22 @@ if [ "$COMMAND" = "UPDATE" ]; then
   echo "Updating system packages"
   pkg up
   echo "Updated system packages"
+  echo "Checking version information from service configuration"
+  EXISTING_VERSION=$(cat $PREFIX/var/service/wyoming-satellite/run |grep -oP 'export VERSION=\d' | cut -d '=' -f2)
+  if [ "$EXISTING_VERSION" = "" ]; then
+    echo "Migration to wyoming.conf required... Press ctrl+C to skip"
+    sleep 10
+    touch $HOME/wyoming.conf
+    cat $PREFIX/var/service/wyoming-satellite/run |grep -oP '^export .*=.*$'|sed "s/export //g" >> $HOME/wyoming.conf
+    echo "Migrated Satellite runtime parameters"
+    cat $PREFIX/var/service/wyoming-events/run |grep -oP '^export .*=.*$'|sed "s/export //g" >> $HOME/wyoming.conf
+    echo "Migrated Events runtime parameters"
+  fi
+  echo "Pulling latest runtime scripts"
+  update_service "wyoming-satellite" "wyoming-satellite-android"
+  update_service "wyoming-wakeword" "wyoming-wakeword-android"
+  update_service "wyoming-events" "wyoming-events-android"
+  update_service "squeezelite" "squeezelite-android"
   echo "Update completed, enabling services"
   enable_services
   exit 0

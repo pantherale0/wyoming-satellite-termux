@@ -226,6 +226,8 @@ preinstall () {
     echo "Enter home directory"
     cd ~
 
+    touch wyoming.conf
+
     echo "Update packages and index"
     pkg up
 
@@ -318,25 +320,26 @@ install_events () {
     echo "Configuring events"
     python3 -m pip install wyoming aiohttp # ensure required libs are installed
     make_service "wyoming-events" "wyoming-events-android"
-    sed -i "s|^export EVENTS_ENABLED=.*$|export EVENTS_ENABLED=true|" $PREFIX/var/service/wyoming-events/run
-    sed -i "s|^export EVENTS_ENABLED=.*$|export EVENTS_ENABLED=true|" $PREFIX/var/service/wyoming-satellite/run
-    sed -i "s|^export HASS_TOKEN=.*$|export HASS_TOKEN=\"$HASS_TOKEN\"|" $PREFIX/var/service/wyoming-events/run
-    sed -i "s|^export HASS_URL=.*$|export HASS_URL=\"$HASS_URL\"|" $PREFIX/var/service/wyoming-events/run
+    echo "EVENTS_ENABLED=true" >> $HOME/wyoming.conf
+    echo "HASS_TOKEN=\"$HASS_TOKEN\"" >> $HOME/wyoming.conf
+    echo "HASS_URL=\"$HASS_URL\"" >> $HOME/wyoming.conf
 }
 
 configure () {
     echo "Configuring Wyoming options..."
-    sed -i "s|^export CUSTOM_DEV_NAME=.*$|export CUSTOM_DEV_NAME=\"$SELECTED_DEVICE_NAME\"|g" $PREFIX/var/service/wyoming-satellite/run 
-    sed -i "s|^export WAKESOUND=.*$|export WAKESOUND=\"$SELECTED_WAKE_SOUND\"|g" $PREFIX/var/service/wyoming-satellite/run
-    sed -i "s|^export DONESOUND=.*$|export DONESOUND=\"$SELECTED_DONE_SOUND\"|g" $PREFIX/var/service/wyoming-satellite/run
-    sed -i "s|^export TIMERFINISHEDSOUND=.*|export TIMERFINISHEDSOUND=\"$SELECTED_TIMER_DONE_SOUND\"|g" $PREFIX/var/service/wyoming-satellite/run
-    sed -i "s|^export TIMERFINISHEDREPEAT=.*$|export TIMERFINISHEDREPEAT=\"$SELECTED_TIMER_REPEAT\"|g" $PREFIX/var/service/wyoming-satellite/run
+    echo "CUSTOM_DEV_NAME=\"$SELECTED_DEVICE_NAME\"" >> $HOME/wyoming.conf
+    echo "WAKESOUND=\"$SELECTED_WAKE_SOUND\"" >> $HOME/wyoming.conf
+    echo "DONESOUND=\"$SELECTED_DONE_SOUND\"" >> $HOME/wyoming.conf
+    echo "TIMERFINISHEDSOUND=\"$SELECTED_TIMER_DONE_SOUND\"" >> $HOME/wyoming.conf
+    echo "TIMERFINISHEDREPEAT=\"$SELECTED_TIMER_REPEAT\"" >> $HOME/wyoming.conf
 
     echo "Configuring OpenWakeWord..."
     # OWW
-    sed -i "s/^export SELECTED_WAKE_WORD=.*$/export SELECTED_WAKE_WORD=\"$SELECTED_WAKE_WORD\"/" $PREFIX/var/service/wyoming-satellite/run
+    echo "SELECTED_WAKE_WORD=\"$SELECTED_WAKE_WORD\"" >> $HOME/wyoming.conf
     if [ "$INSTALL_OWW" = "1" ]; then
-        sed -i 's/^export OWW_ENABLED=.*$/export OWW_ENABLED=true/' $PREFIX/var/service/wyoming-satellite/run
+        echo "OWW_ENABLED=true" >> $HOME/wyoming.conf
+    else
+        echo "OWW_ENABLED=" >> $HOME/wyoming.conf
     fi
 }
 
@@ -533,14 +536,12 @@ EOF
         ./script/setup
         cd ..
         make_service "wyoming-wakeword" "wyoming-wakeword-android"
-        sed -i "s/^export SELECTED_WAKE_WORD=.*$/export SELECTED_WAKE_WORD=\"$SELECTED_WAKE_WORD\"/" $PREFIX/var/service/wyoming-wakeword/run
     fi
 
     if [ "$INSTALL_SQUEEZELITE" = "1" ]; then
         install_squeezelite
         echo "Setting up squeezelite service..."
         make_service "squeezelite" "squeezelite-android"
-        sed -i "s|^export CUSTOM_DEV_NAME=.*$|export CUSTOM_DEV_NAME=\"$SELECTED_DEVICE_NAME\"|g" $PREFIX/var/service/squeezelite/run 
     fi
 
     if [ "$INSTALL_SSHD" = "1" ]; then

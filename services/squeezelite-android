@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/sh
-
-export CUSTOM_DEV_NAME=""
+. $HOME/wyoming.conf)
+export VERSION=1
 
 if [ "$CUSTOM_DEV_NAME" = "" ]; then
     export TERMUX_INFO="$(termux-info)"
