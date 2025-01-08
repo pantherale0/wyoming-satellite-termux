@@ -54,7 +54,9 @@ fi
 
 wlog "Enter wyoming-satellite directory..."
 cd "$HOME/wyoming-satellite"
-
+wlog "Sleeping for 15s to allow wakeword / events to start"
+sleep 15
+wlog "Starting satellite"
 exec stdbuf -oL -eL python3 ./script/run \
 --name "$SATELLITE_NAME" \
 --no-zeroconf \
