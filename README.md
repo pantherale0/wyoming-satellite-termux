@@ -145,8 +145,8 @@ Without any command line flags, the install will reset to a default state. See t
 
 ### Stopping / starting service
 
-- To stop the service, run `sv down wyoming`
-- To start the service, run `sv up wyoming`
+- To stop the service, run `wyoming-cli --stop`
+- To start the service, run `wyoming-cli --start`
 
 ### Using
 

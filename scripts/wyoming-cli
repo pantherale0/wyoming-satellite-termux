@@ -1,0 +1,85 @@
+#!/data/data/com.termux/files/usr/bin/sh
+echo "Wyoming Android CLI"
+
+BRANCH="merged"
+COMMAND=""
+
+for i in "$@"; do
+  case $i in
+    --branch=*)
+      BRANCH="${i#*=}"
+      shift
+      ;;
+    --restart)
+      COMMAND="RESTART"
+      shift
+      ;;
+    --disable)
+      COMMAND="DISABLE"
+      shift
+      ;;
+    --enable)
+      COMMAND="ENABLE"
+      shift
+      ;;
+    --start)
+      COMMAND="START"
+      shift
+      ;;
+    --stop)
+      COMMAND="STOP"
+      shift
+      ;;
+    --uninstall)
+      COMMAND="UNINSTALL"
+      shift
+      ;;
+    --update)
+      COMMAND="UPDATE"
+      shift
+      ;;
+    --configure)
+      COMMAND="CONFIGURE"
+      shift
+      ;;
+    -*|--*)
+      echo "Unknown option $i"
+      exit 1
+      ;;
+    *)
+      ;;
+  esac
+done
+
+enable_services () {
+  sv-enable wyoming-satellite
+  sv-enable wyoming-wakeword
+  sv-enable wyoming-events
+}
+
+disable_services () {
+  sv-disable wyoming-satellite
+  sv-disable wyoming-wakeword
+  sv-disable wyoming-events
+}
+
+if [ "$COMMAND" = "RESTART" ]; then
+  echo "Stopping Wyoming services"
+  disable_services
+  sleep(5)
+  echo "Starting Wyoming services"
+  enable_services
+  exit 0
+fi
+
+if [ "$COMMAND" = "STOP" ]; then
+  echo "Stopping Wyoming services"
+  disable_services
+  exit 0
+fi
+
+if [ "$COMMAND" = "START" ]; then
+  echo "Starting Wyoming services"
+  enable_services
+  exit 0
+fi

@@ -301,6 +301,9 @@ preinstall () {
         cleanup
     fi
 
+    echo "Installing Wyoming CLI"
+    wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/scripts/wyoming-cli" -O $PREFIX/bin/wyoming-cli
+    chmod a+x $PREFIX/bin/wyoming-cli
 }
 
 install_squeezelite () {
