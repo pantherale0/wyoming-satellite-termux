@@ -1,18 +1,24 @@
 #!/data/data/com.termux/files/usr/bin/sh
 
+: ${DIALOG=dialog}
+: ${DIALOG_OK=0}
+: ${DIALOG_CANCEL=1}
+: ${DIALOG_ESC=255}
+INTERACTIVE_TITLE="Home Assistant Voice Termux Installer"
+
 MODE=""
 BRANCH="merged"
 
 # Installer
 INSTALL_SSHD=""
-INSTALL_EVENTS="" # this doesn't do anything yet
+INSTALL_EVENTS=""
 NO_AUTOSTART=""
 NO_INPUT=""
 SKIP_UNINSTALL=0
-SKIP_WYOMING=0
-SKIP_OWW=0
-SKIP_SQUEEZELITE=0
-INTERACTIVE=0
+INSTALL_WYOMING=1
+INSTALL_OWW=1
+INSTALL_SQUEEZELITE=1
+INTERACTIVE=1
 
 # Config
 SELECTED_WAKE_WORD="ok_nabu"
@@ -85,15 +91,15 @@ for i in "$@"; do
       shift
       ;;
     --skip-wyoming)
-      SKIP_WYOMING=1
+      INSTALL_WYOMING=0
       shift
       ;;
     --skip-wakeword)
-      SKIP_OWW=1
+      INSTALL_OWW=0
       shift
       ;;
     --skip-squeezelite)
-      SKIP_SQUEEZELITE=1
+      INSTALL_SQUEEZELITE=0
       shift
       ;;
     --install-ssh)
@@ -122,6 +128,90 @@ for i in "$@"; do
 done
 
 echo "Mode: $BRANCH"
+
+interactive_prompts () {
+    ### Prompt to select options to install
+    INSTALL_WYOMING=0
+    INSTALL_OWW=0
+    INSTALL_SQUEEZELITE=0
+    INSTALL_EVENTS=0
+    INSTALL_SSHD=0
+    MODE="INSTALL"
+    declare -a INSTALL_OPTS=($($DIALOG --backtitle "$INTERACTIVE_TITLE" \
+    --clear \
+	--title "Install Options" \
+    --checklist "Select options to install" 15 90 5 \
+            1   "Core Wyoming Satellite service." ON \
+            2   "OpenWakeWord to trigger the Assist pipeline locally on device." ON \
+            3   "Squeezelite to play your favourite tunes." ON \
+            4   "Event forwarder to expose Wyoming Events into Home Assistant." OFF \
+            5   "SSH Server to access Termux from another device." OFF 2>&1 >/dev/tty))
+
+    for sel in "${INSTALL_OPTS[@]}"; do
+        case "$sel" in
+            1) INSTALL_WYOMING=1;;
+            2) INSTALL_OWW=1;;
+            3) INSTALL_SQUEEZELITE=1;;
+            4) INSTALL_EVENTS=1;;
+            5) INSTALL_SSHD=1;;
+            *) echo "Unknown option!";;
+        esac
+    done
+
+    if $DIALOG --stdout --title "Autostart" \
+            --backtitle "$INTERACTIVE_TITLE" \
+            --yesno "Enable related services to start automatically on boot?" 7 60; then
+        NO_AUTOSTART=0
+        $DIALOG --title "Autostart" --backtitle "$INTERACTIVE_TITLE" --msgbox "Autostart will be enabled" 6 44
+    else
+        NO_AUTOSTART=1
+        $DIALOG --title "Autostart" --backtitle "$INTERACTIVE_TITLE" --msgbox "You will need to start services manually" 6 44
+    fi
+
+    if [ "$INSTALL_WYOMING" = "1" ]; then
+        $DIALOG --title "Wyoming Configuration" --backtitle "$INTERACTIVE_TITLE" --msgbox "Satellite will be installed" 6 44
+        SELECTED_WAKE_WORD=$($DIALOG --stdout --title "Wyoming Configuration" --backtitle "$INTERACTIVE_TITLE" --radiolist "Wakeword" 50 50 5 \ 
+            "alexa" "Alexa" OFF \
+            "ok_nabu" "Ok Nabu" ON \
+            "hey_mycroft" "Hey Mycroft" OFF \
+            "hey_jarvis" "Hey Jarvis" OFF \
+            "hey_rhasspy" "Hey Rhasspy" OFF)
+        SELECTED_DEVICE_NAME=$($DIALOG --stdout --title "Wyoming Configuration" --backtitle "$INTERACTIVE_TITLE" --inputbox "Enter a name for your device\nIt must not include spaces if the event forwarder is being installed\nExample: wyoming_kitchen_assistant" 15 50)
+    fi
+
+    if [ "$INSTALL_EVENTS" = "1" ]; then
+        $DIALOG --title "Events Configuration" --backtitle "$INTERACTIVE_TITLE" --msgbox "Events will be installed\nThe following prompts will ask for details about your Home Assistant install" 6 44
+        HASS_URL=$($DIALOG --stdout --title "Events Configuration" --backtitle "$INTERACTIVE_TITLE" --inputbox "Enter the URL of your Home Assistant install" 15 50 "$HASS_URL")
+        HASS_TOKEN=$($DIALOG --stdout --title "Events Configuration" --backtitle "$INTERACTIVE_TITLE" --inputbox "Enter the acces token from Home Assistant\nThis can be copied into this prompt." 15 50)
+    fi
+}
+
+interactive_post_install () {
+    MESSAGE=$(cat << EOF
+Install is now complete, the rest of the configuration can be performed in the Home Assistant UI
+-----
+Setup the Wyoming platform (see readme for information). Use the IP address noted earlier with
+Port: 10700 (Wyoming Satellite)
+If you configured the event forwarder, these will be available under 'wyoming_*'
+-----
+Device options can now be set in the Home Assistant UI
+-----
+Recommended device settings*
+-----
+Lenovo ThinkSmart View
+Mic Volume: 5.0
+Noise Suppression Level: Medium
+-----
+Surface Go 2 (BlissOS 15)
+Mic Volume: 3.0
+Noise Suppression Level: Medium
+-----
+Press enter to exit
+EOF
+)
+    $DIALOG --title "Installation Completed" --backtitle "$INTERACTIVE_TITLE" --msgbox "$MESSAGE" 20 60
+    clear
+}
 
 preinstall () {
     echo "Running pre-install"
@@ -237,7 +327,7 @@ configure () {
     echo "Configuring OpenWakeWord..."
     # OWW
     sed -i "s/^export SELECTED_WAKE_WORD=.*$/export SELECTED_WAKE_WORD=\"$SELECTED_WAKE_WORD\"/" $PREFIX/var/service/wyoming/run
-    if [ "$SKIP_OWW" = "0" ]; then
+    if [ "$INSTALL_OWW" = "1" ]; then
         sed -i 's/^export OWW_ENABLED=.*$/export OWW_ENABLED=true/' $PREFIX/var/service/wyoming/run
     fi
 }
@@ -286,13 +376,13 @@ uninstall () {
 
 install () {
     if [ "$NO_INPUT" = "" ]; then
-        echo "At the end of this process a full reboot is recommended, ensure your device is completely powered down before starting back up"
-        echo "This is to ensure that the require wakelocks will start correctly"
-        echo "Press enter to continue, alternative press Q to exit"
-        read quit
-        if [ "$quit" = "q" ] || [ "$quit" = "Q" ]; then
-            exit 0
-        fi
+        MESSAGE=$(cat << EOF
+At the end of this process a full reboot is recommended, ensure your device is completely powered down before starting back up
+This is to ensure that the require wakelocks will start correctly
+EOF
+)
+        $DIALOG --backtitle "$INTERACTIVE_TITLE" --msgbox "$MESSAGE" 20 60
+        clear
     fi
 
     if [ "$HASS_URL" = "" ] && [ "$INSTALL_EVENTS" = "1" ]; then
@@ -362,7 +452,7 @@ install () {
         echo "ERROR: No microphone detected" >&2
     fi
 
-    if [ "$SKIP_WYOMING" = "0" ]; then
+    if [ "$INSTALL_WYOMING" = "1" ]; then
         echo "Cloning Wyoming Satellite repo..."
         git clone https://github.com/rhasspy/wyoming-satellite.git
 
@@ -412,7 +502,7 @@ install () {
         echo "Successfully installed and set up Wyoming Satellite"
     fi
 
-    if [ "$SKIP_OWW" = "0" ]; then
+    if [ "$INSTALL_OWW" = "1" ]; then
         echo "Selected $SELECTED_WAKE_WORD"
         echo "Ensure python-tflite-runtime, ninja and patchelf are installed..."
         pkg install python-tflite-runtime ninja patchelf -y
@@ -428,7 +518,7 @@ install () {
         cd ..
     fi
 
-    if [ "$SKIP_SQUEEZELITE" = "0" ]; then
+    if [ "$INSTALL_SQUEEZELITE" = "1" ]; then
         install_squeezelite
         echo "Setting up squeezelite service..."
         mkdir -p $PREFIX/var/service/squeezelite/
@@ -455,33 +545,17 @@ install () {
     sv-enable wyoming
 }
 
+if [ "$MODE" = "" ] && [ "$INTERACTIVE" = "1" ]; then
+    preinstall
+    interactive_prompts
+fi
+
 if [ "$MODE" = "INSTALL" ]; then
 
     install
     echo "Install complete"
-    if [ "$NO_INPUT" = "" ]; then
-        echo "Install is now complete, the rest of the configuration can be performed in the Home Assistant UI"
-        echo "-----"
-        echo "Setup the Wyoming platform (see readme for information). Use the IP address noted earlier with"
-        echo "Port: 10700 (Wyoming Satellite)"
-        echo "If you configured the event forwarder, these will be available under 'wyoming_*'"
-        echo "-----"
-        echo "Press enter to continue"
-        read
-        echo "Device options can now be set in the Home Assistant UI"
-        echo "-----"
-        echo "Recommended settings*"
-        echo "-----"
-        echo "Lenovo ThinkSmart View"
-        echo "Mic Volume: 5.0"
-        echo "Noise Suppression Level: Medium"
-        echo "-----"
-        echo "Surface Go 2 (BlissOS 15)"
-        echo "Mic Volume: 3.0"
-        echo "Noise Suppresion Level: Medium"
-        echo "-----"
-        echo "Press enter to exit"
-        read
+    if [ "$INTERACTIVE" = "1" ]; then
+        interactive_post_install
     fi
     exit 0
 fi
