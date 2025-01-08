@@ -39,58 +39,63 @@ To customize this behaviour, see configuration parameters below.
 
 `--configure`: Reconfigure existing install with updated options
 
-#### Configuration paramters
+#### Configuration Parameters
 
-`--wake-word=<wake_word>`: Specify a wakeword to use (defaults to Ok Nabu), must be a supported wakeword by the OpenWakeWord project:
-<pre>
-    ok_nabu: Ok Nabu
-    alexa: Alexa
-    hey_mycroft: Hey Mycroft
-    hey_jarvis: Hey Jarvis
-    hey_rhasspy: Hey Rhasspy
-</pre>
+* **`--wake-word=<wake_word>`:** Specify a wake word to use (defaults to "Ok Nabu"). 
+    * Must be a supported wake word by the OpenWakeWord project:
+        * `ok_nabu`
+        * `alexa`
+        * `hey_mycroft`
+        * `hey_jarvis`
+        * `hey_rhasspy` 
 
-`--device-name=`: Specify a custom device name to use (defaults to make + model of device)
+* **`--device-name=`:** Specify a custom device name to use (defaults to the make + model of the device).
 
-`--wake-sound=`: Full path to a wake sound file (played by the Satellite after using the wakeword). WAV file only.
+* **`--wake-sound=`:** Full path to a wake sound file (played by the Satellite after using the wake word). 
+    * Must be a WAV file.
 
-`--done-sound=`: Full path to a sound file that is played by the satellite after you have finished speaking. WAV file only.
+* **`--done-sound=`:** Full path to a sound file that is played by the Satellite after you have finished speaking. 
+    * Must be a WAV file.
 
-`--timer-finished-sound=`: Full path to a sound file that is played once a timer has finished. WAV file only
+* **`--timer-finished-sound=`:** Full path to a sound file that is played once a timer has finished.
+    * Must be a WAV file.
 
-`--timer-finished-repeat=<repeats> <delay>`: Repeat the timer finished sound where <repeats> is the number of times to repeat the WAV, and <delay> is the number of seconds to wait between repeats.
+* **`--timer-finished-repeat=<repeats> <delay>`:** 
+    * Repeat the timer finished sound where:
+        * `<repeats>` is the number of times to repeat the WAV.
+        * `<delay>` is the number of seconds to wait between repeats. 
 
-#### Install parameters
+#### Install Parameters
 
-`--skip-cleanup`: Skip running uninstall and cleanup during installation
+* **`--skip-cleanup`:** Skip running uninstall and cleanup steps during installation.
 
-`--skip-wyoming`: Skip installing the Wyoming Satellite
+* **`--skip-wyoming`:** Skip installing the Wyoming Satellite software itself.
 
-`--skip-wakeword`: Skip installing OpenWakeWord
+* **`--skip-wakeword`:** Skip installing the OpenWakeWord engine used for wake word detection.
 
-`--skip-squeezelite`: Skip installing a Squeezelite player
+* **`--skip-squeezelite`:** Skip installing the Squeezelite player software.
 
-`--install-ssh`: Install a SSH server (openssh) for remote commandline access
+* **`--install-ssh`:** Install an SSH server (openssh) to enable remote command-line access to the device.
 
-`--install-events`: Install a Wyoming event forwarder to broadcast events onto the Home Assistant event bus
+* **`--install-events`:** Install a Wyoming event forwarder to broadcast events to the Home Assistant event bus.
 
-`--no-autostart`: Don't start Wyoming at the end of installation
+* **`--no-autostart`:** Prevent Wyoming from automatically starting at the end of the installation process.
 
-`-q`: Bypass additional prompts that require pressing the enter key to continue
+* **`-q`:** Bypass confirmation prompts that normally require pressing Enter to continue.
 
-#### Home Assistant Event Bus
+#### Home Assistant Event Bus (**NOT TESTED!**)
 
-NOT TESTED!
+Optionally, you can install a service to forward Wyoming events to your Home Assistant instance's event bus.
 
-You can optionally install a forwarding service that will forward all Wyoming events onto the event bus.
+**Required Parameters:**
 
-The following parameters are required:
+* **`--hass-url`:** The local URL of your Home Assistant instance (e.g., http://192.168.1.2:8123).
 
-`--hass-url`: The local URL to your Home Assistant instance (for example, http://192.168.1.2:8123)
+* **`--hass-token`:** A [long-lived access token](https://community.home-assistant.io/t/how-to-get-long-lived-access-token/162159/5?u=11harveyj) to access your Home Assistant instance.
 
-`--hass-token`: The [long lived access token](https://community.home-assistant.io/t/how-to-get-long-lived-access-token/162159/5?u=11harveyj) to access your Home Assistant instance
+**Logs:**
 
-Logs will be available in the "wyoming-events.log" file
+* All Wyoming event forwarding logs will be recorded in the "wyoming-events.log" file.
 
 #### Available events:
 
