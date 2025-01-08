@@ -26,7 +26,7 @@ DEVICE_LOOKUP_TEMPLATE = """
   {%- set name = device_attr(device, "name") %}
   {%- set idents = device_attr(device, "identifiers") %}
   {% if idents|list|count > 0 %}
-  {% if name and "Android" in name and " - " in name and "wyoming" in idents|list|first %}
+  {% if name and " - " in name and "wyoming" in idents|list|first %}
   {%- set entities = device_entities(device) | list %}
   {%- set data = {
   "id": device,
@@ -81,7 +81,7 @@ class WyomingEventHandler(AsyncEventHandler):
         self.cli_args = cli_args
         self.client_id = str(time.monotonic_ns())
         self.wyoming_name = cli_args.wyoming_name
-        self.device_id = None
+        self.device_id = ""
 
         _LOGGER.debug("Client connected: %s", self.client_id)
 
@@ -146,16 +146,19 @@ class WyomingEventHandler(AsyncEventHandler):
         _LOGGER.debug(event)
 
         try:
-            if self.device_id is None:
+            if self.device_id == "":
                 await self.async_retrieve_device_id()
         except Exception as exc:
             _LOGGER.error("Error: %s", exc)
 
-        # Forward a Wyoming event to Home Assistant
-        await self.async_fire_event(
-            event_type=f"wyoming_{event.type.lower()}",
-            event_data=event.data
-        )
+        try:
+            # Forward a Wyoming event to Home Assistant
+            await self.async_fire_event(
+                event_type=f"wyoming_{event.type.lower()}",
+                event_data=event.data
+            )
+        except Exception as exc:
+            _LOGGER.error("Error broadcasting event: %s", exc)
 
         return True
 
