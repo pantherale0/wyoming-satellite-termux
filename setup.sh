@@ -533,6 +533,7 @@ EOF
         ./script/setup
         cd ..
         make_service "wyoming-wakeword" "wyoming-wakeword-android"
+        sed -i "s/^export SELECTED_WAKE_WORD=.*$/export SELECTED_WAKE_WORD=\"$SELECTED_WAKE_WORD\"/" $PREFIX/var/service/wyoming-wakeword/run
     fi
 
     if [ "$INSTALL_SQUEEZELITE" = "1" ]; then

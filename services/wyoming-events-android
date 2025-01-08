@@ -4,6 +4,11 @@ export HASS_TOKEN=false
 export HASS_URL=false
 export CUSTOM_DEV_NAME="false"
 
+wlog() {
+    local message="$1"
+    echo "$message" 2>&1 | tee -a "$HOME/wyoming-events.log"
+}
+
 if [ "$CUSTOM_DEV_NAME" = "" ]; then
     export TERMUX_INFO="$(termux-info)"
     export MANUFACTURER_NAME="$(echo "$TERMUX_INFO" | grep -A 1 "Device manufacturer:" | tail -1)"
