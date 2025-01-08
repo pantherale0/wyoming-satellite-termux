@@ -26,7 +26,7 @@ DEVICE_LOOKUP_TEMPLATE = """
   {%- set name = device_attr(device, "name") %}
   {%- set idents = device_attr(device, "identifiers") %}
   {% if idents|list|count > 0 %}
-  {% if name and " - " in name and "wyoming" in idents|list|first %}
+  {% if name and "wyoming" in idents|list|first %}
   {%- set entities = device_entities(device) | list %}
   {%- set data = {
   "id": device,
@@ -130,8 +130,8 @@ class WyomingEventHandler(AsyncEventHandler):
                     event_type
                 ),
                 json={
-                    **event_data,
-                    "device": self.device_id
+                    "device": self.device_id,
+                    "data": event_data
                 },
                 headers={
                     "Authorization": f"Bearer {self.cli_args.hass_token}",
