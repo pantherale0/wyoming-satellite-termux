@@ -170,7 +170,9 @@ interactive_prompts () {
 
     if [ "$INSTALL_WYOMING" = "1" ]; then
         $DIALOG --title "Wyoming Configuration" --backtitle "$INTERACTIVE_TITLE" --msgbox "Satellite will be installed" 6 44
-        SELECTED_WAKE_WORD=$($DIALOG --stdout --title "Wyoming Configuration" --backtitle "$INTERACTIVE_TITLE" --radiolist "Wakeword" 50 50 5 \ 
+        SELECTED_WAKE_WORD=$($DIALOG --stdout --title "Wyoming Configuration" \
+            --backtitle "$INTERACTIVE_TITLE" \
+            --radiolist "Wakeword" 50 50 5 \
             "alexa" "Alexa" OFF \
             "ok_nabu" "Ok Nabu" ON \
             "hey_mycroft" "Hey Mycroft" OFF \
@@ -180,7 +182,7 @@ interactive_prompts () {
     fi
 
     if [ "$INSTALL_EVENTS" = "1" ]; then
-        $DIALOG --title "Events Configuration" --backtitle "$INTERACTIVE_TITLE" --msgbox "Events will be installed\nThe following prompts will ask for details about your Home Assistant install" 6 44
+        $DIALOG --title "Events Configuration" --backtitle "$INTERACTIVE_TITLE" --msgbox "Events will be installed\nThe following prompts will ask for details about your Home Assistant install" 15 50
         HASS_URL=$($DIALOG --stdout --title "Events Configuration" --backtitle "$INTERACTIVE_TITLE" --inputbox "Enter the URL of your Home Assistant install" 15 50 "$HASS_URL")
         HASS_TOKEN=$($DIALOG --stdout --title "Events Configuration" --backtitle "$INTERACTIVE_TITLE" --inputbox "Enter the acces token from Home Assistant\nThis can be copied into this prompt." 15 50)
     fi
@@ -301,11 +303,6 @@ preinstall () {
 
 }
 
-install_ssh () {
-    pkg install openssh -y
-    sshd
-}
-
 install_squeezelite () {
     echo "allow-external-apps=true" >> ~/.termux/termux.properties
     pkg install squeezelite -y
@@ -317,9 +314,11 @@ install_events () {
     wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/wyoming-events.py" -O ~/wyoming-events/wyoming-events.py
     echo "Configuring events"
     python3 -m pip install wyoming aiohttp # ensure required libs are installed
+    make_service "wyoming-events" "wyoming-events-android"
+    sed -i "s|^export EVENTS_ENABLED=.*$|export EVENTS_ENABLED=true|" $PREFIX/var/service/wyoming-events/run
     sed -i "s|^export EVENTS_ENABLED=.*$|export EVENTS_ENABLED=true|" $PREFIX/var/service/wyoming/run
-    sed -i "s|^export HASS_TOKEN=.*$|export HASS_TOKEN=\"$HASS_TOKEN\"|" $PREFIX/var/service/wyoming/run
-    sed -i "s|^export HASS_URL=.*$|export HASS_URL=\"$HASS_URL\"|" $PREFIX/var/service/wyoming/run
+    sed -i "s|^export HASS_TOKEN=.*$|export HASS_TOKEN=\"$HASS_TOKEN\"|" $PREFIX/var/service/wyoming-events/run
+    sed -i "s|^export HASS_URL=.*$|export HASS_URL=\"$HASS_URL\"|" $PREFIX/var/service/wyoming-events/run
 }
 
 configure () {
@@ -339,10 +338,12 @@ configure () {
 }
 
 cleanup () {
-    echo "Stopping and killing any remaining Wyoming instances"
-    sv down wyoming
+    echo "Stopping and killing remaining services"
+    sv-disable wyoming-satellite
+    sv-disable wyoming-wakeword
+    sv-disable wyoming-events
+    sv-disable squeezelite
     killall python3
-    sv-disable wyoming
 
     echo "Deleting files and directories related to the project..."
     rm -f ~/tmp.wav
@@ -354,8 +355,9 @@ cleanup () {
 
     echo "Removing squeezelite"
     pkg remove squeezelite -y
-    sv down squeezelite
-    sv-disable squeezelite
+
+    echo "Removing services"
+    rm -rf $PREFIX/var/service/wyoming-*
     rm -rf $PREFIX/var/service/squeezelite
 }
 
@@ -378,6 +380,20 @@ uninstall () {
             fi
         fi
     fi
+}
+
+make_service () {
+    # Helper to make a new service
+    local SVC_NAME="$1"
+    local SVC_RUN_FILE="$1"
+    echo "Setting up $SVC_NAME service..."
+    mkdir -p $PREFIX/var/service/$SVC_NAME/
+    touch $PREFIX/var/service/$SVC_NAME/down # ensure the service does not start when we kill runsv
+    mkdir -p $PREFIX/var/service/$SVC_NAME/log
+    ln -sf $PREFIX/share/termux-services/svlogger $PREFIX/var/service/$SVC_NAME/log/run
+    wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/services/$SVC_RUN_FILE" -O $PREFIX/var/service/$SVC_NAME/run
+    chmod +x $PREFIX/var/service/wyoming/run
+    echo "Installed $SVC_NAME service"
 }
 
 install () {
@@ -480,16 +496,10 @@ EOF
 
         echo "Setting up autostart..."
         mkdir -p ~/.termux/boot/
-        wget -P ~/.termux/boot/ "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/services-autostart"
+        wget -P ~/.termux/boot/ "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/boot/services-autostart"
         chmod +x ~/.termux/boot/services-autostart
 
-        echo "Setting up wyoming service..."
-        mkdir -p $PREFIX/var/service/wyoming/
-        touch $PREFIX/var/service/wyoming/down # ensure the service does not start when we kill runsv
-        mkdir -p $PREFIX/var/service/wyoming/log
-        ln -sf $PREFIX/share/termux-services/svlogger $PREFIX/var/service/wyoming/log/run
-        wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/wyoming-satellite-android" -O $PREFIX/var/service/wyoming/run
-        chmod +x $PREFIX/var/service/wyoming/run
+        make_service "wyoming-satellite" "wyoming-satellite-android"
 
         configure
 
@@ -520,33 +530,30 @@ EOF
         echo "Running Wyoming OpenWakeWord setup script..."
         ./script/setup
         cd ..
+        make_service "wyoming-wakeword" "wyoming-wakeword-android"
     fi
 
     if [ "$INSTALL_SQUEEZELITE" = "1" ]; then
         install_squeezelite
         echo "Setting up squeezelite service..."
-        mkdir -p $PREFIX/var/service/squeezelite/
-        touch $PREFIX/var/service/squeezelite/down # ensure the service does not start until we are ready
-        mkdir -p $PREFIX/var/service/squeezelite/log
-        ln -sf $PREFIX/share/termux-services/svlogger $PREFIX/var/service/squeezelite/log/run
-        wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/squeezelite-android" -O $PREFIX/var/service/squeezelite/run
-        chmod +x $PREFIX/var/service/squeezelite/run
+        make_service "squeezelite" "squeezelite-android"
         sed -i "s|^export CUSTOM_DEV_NAME=.*$|export CUSTOM_DEV_NAME=\"$SELECTED_DEVICE_NAME\"|g" $PREFIX/var/service/squeezelite/run 
-        sv-enable squeezelite
     fi
 
     if [ "$INSTALL_SSHD" = "1" ]; then
         echo "Installing SSH server"
-        install_ssh
-        echo "SSH Server installed, running on port 8022"
+        pkg install openssh -y
     fi
 
     if [ "$NO_AUTOSTART" = "" ]; then
-        echo "Starting Wyoming service now..."
+        echo "Starting services now..."
         killall python3 # ensure no processes are running before starting the service
-        sv up wyoming
+        sv-enable sshd
+        sv-enable wyoming-wakeword
+        sv-enable wyoming-events
+        sv-enable wyoming-satellite
+        sv-enable squeezelite
     fi
-    sv-enable wyoming
 }
 
 if [ "$MODE" = "" ] && [ "$INTERACTIVE" = "1" ]; then

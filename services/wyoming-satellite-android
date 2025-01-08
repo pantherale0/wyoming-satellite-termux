@@ -6,9 +6,6 @@ export WAKESOUND=false
 export DONESOUND=false
 export TIMERFINISHEDSOUND=false
 export TIMERFINISHEDREPEAT=false
-export EVENTS_ENABLED=false
-export HASS_TOKEN=false
-export HASS_URL=false
 
 wlog() {
     local message="$1"
@@ -42,10 +39,8 @@ else
 fi
 
 if [ "$OWW_ENABLED" = "true" ]; then
+    sv start wyoming-wakeword || exit 1
     export OWW_FLAGS="--wake-uri tcp://127.0.0.1:10400 --wake-word-name $SELECTED_WAKE_WORD"
-    wlog "Enter wyoming-openwakeword directory..."
-    cd "$HOME/wyoming-openwakeword"
-    stdbuf -oL -eL python3 ./script/run --uri 'tcp://0.0.0.0:10400' --preload-model "$SELECTED_WAKE_WORD" --debug 2>&1 | tee -a "$HOME/wyoming-satellite.log" &
 else
     export OWW_FLAGS=""
 fi
@@ -56,17 +51,16 @@ if ! pactl list short modules | grep "module-sles-source" ; then
 fi
 
 if [ "$EVENTS_ENABLED" = "true" ]; then
+    sv start wyoming-events || exit 1
     export EVENTS_FLAGS="--event-uri tcp://127.0.0.1:10500"
-    export EVENT_HANDLER_FLAGS="--uri tcp://127.0.0.1:10500 --hass-token \"$HASS_TOKEN\" --hass-url \"$HASS_URL\" --wyoming-name \"$SATELLITE_NAME\""
-    wlog "Enter wyoming-events directory..."
-    cd "$HOME/wyoming-events"
-    stdbuf -oL -eL python3 ./wyoming-events.py $EVENT_HANDLER_FLAGS 2>&1 | tee -a "$HOME/wyoming-events.log" &
+else
+    export EVENTS_FLAGS=""
 fi
 
 wlog "Enter wyoming-satellite directory..."
 cd "$HOME/wyoming-satellite"
 
-stdbuf -oL -eL python3 ./script/run \
+exec stdbuf -oL -eL python3 ./script/run \
 --name "$SATELLITE_NAME" \
 --no-zeroconf \
 --uri 'tcp://0.0.0.0:10700' \
