@@ -59,13 +59,16 @@ enable_services () {
   sv-enable wyoming-satellite
   sv-enable wyoming-wakeword
   sv-enable wyoming-events
+  sv-enable squeezelite
 }
 
 disable_services () {
   sv-disable wyoming-satellite
   sv-disable wyoming-wakeword
   sv-disable wyoming-events
+  sv-disable squeezelite
   killall python3
+  killall squeezelite
 }
 
 update_service () {
