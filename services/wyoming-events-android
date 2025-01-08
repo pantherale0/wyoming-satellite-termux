@@ -1,5 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/sh
-. $HOME/wyoming.conf)
+. $HOME/wyoming.conf
 export VERSION=1
 
 wlog() {
