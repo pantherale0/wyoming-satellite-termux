@@ -100,15 +100,16 @@ class WyomingEventHandler(AsyncEventHandler):
                 headers={
                     "Authorization": f"Bearer {self.cli_args.hass_token}",
                     "Content-Type": "application/json",
+                    "Accept": "application/json"
                 }
             ) as req:
                 if req.ok:
                     data = await req.text()
                     _LOGGER.info("Got response: %s", data)
-                    data: list[dict[str, str]] = json.loads(data)
+                    data: list[dict[str, str]] = json.loads(str(data).replace("'", "\""))
                     if not isinstance(data, list):
                         return
-                    filtered = [x for x in data if x == self.wyoming_name]
+                    filtered = [x for x in data if x["name"] == self.wyoming_name]
                     if len(filtered) > 0:
                         self.device_id = filtered[0]
                         _LOGGER.info("Initialized with device %s", self.device_id)
