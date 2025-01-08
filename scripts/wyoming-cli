@@ -38,6 +38,10 @@ for i in "$@"; do
       COMMAND="UPDATE"
       shift
       ;;
+    --update-cli)
+      COMMAND="UPDATECLI"
+      shift
+      ;;
     --configure)
       COMMAND="CONFIGURE"
       shift
@@ -61,6 +65,7 @@ disable_services () {
   sv-disable wyoming-satellite
   sv-disable wyoming-wakeword
   sv-disable wyoming-events
+  killall python3
 }
 
 if [ "$COMMAND" = "RESTART" ]; then
@@ -80,6 +85,43 @@ fi
 
 if [ "$COMMAND" = "START" ]; then
   echo "Starting Wyoming services"
+  enable_services
+  exit 0
+fi
+
+if [ "$COMMAND" = "UPDATECLI" ]; then
+  echo "Updating Wyoming CLI"
+  wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/scripts/wyoming-cli" -O $PREFIX/bin/wyoming-cli
+  chmod a+x $PREFIX/bin/wyoming-cli
+fi
+
+if [ "$COMMAND" = "UPDATE" ]; then
+  echo "Updating Wyoming Components"
+  echo "Disabling Wyoming"
+  disable_services
+  echo "Downloading Wyoming Satellite..."
+  cd $HOME/wyoming-satellite
+  git add wyoming_satellite/__main__.py
+  git stash # keep the injected faulthander
+  git pull
+  git stash pop # reapply injected faulthandler
+  echo "Updating Wyoming Satellite"
+  ./script/setup
+  echo "Wyoming Satellite updated"
+  echo "Downloading Wyoming WakeWord Changes"
+  cd $HOME/wyoming-openwakeword
+  git pull
+  echo "Updating Wyoming WakeWord"
+  ./script/Setup
+  echo "Wyoming WakeWord updated"
+  echo "Updating Wyoming Events"
+  wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/wyoming-events.py" -O ~/wyoming-events/wyoming-events.py
+  python3 -m pip install wyoming aiohttp
+  echo "Wyoming Events updated"
+  echo "Updating system packages"
+  pkg up
+  echo "Updated system packages"
+  echo "Update completed, enabling services"
   enable_services
   exit 0
 fi
