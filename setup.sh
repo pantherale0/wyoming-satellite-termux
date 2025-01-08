@@ -385,7 +385,7 @@ uninstall () {
 make_service () {
     # Helper to make a new service
     local SVC_NAME="$1"
-    local SVC_RUN_FILE="$1"
+    local SVC_RUN_FILE="$2"
     echo "Setting up $SVC_NAME service..."
     mkdir -p $PREFIX/var/service/$SVC_NAME/
     touch $PREFIX/var/service/$SVC_NAME/down # ensure the service does not start when we kill runsv
