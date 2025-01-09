@@ -7,7 +7,7 @@
 INTERACTIVE_TITLE="Home Assistant Voice Termux Installer"
 
 MODE=""
-BRANCH="merged"
+BRANCH="main"
 
 # Installer
 INSTALL_SSHD=""
@@ -127,7 +127,7 @@ for i in "$@"; do
   esac
 done
 
-echo "Mode: $BRANCH"
+echo "Branch: $BRANCH"
 
 interactive_prompts () {
     ### Prompt to select options to install

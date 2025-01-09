@@ -1,8 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/sh
-echo "Wyoming Android CLI"
-
-BRANCH="merged"
 COMMAND=""
+BRANCH="main"
 
 for i in "$@"; do
   case $i in
@@ -54,6 +52,8 @@ for i in "$@"; do
       ;;
   esac
 done
+
+echo "Wyoming Android CLI: $BRANCH"
 
 enable_services () {
   sv-enable wyoming-satellite
