@@ -17,6 +17,7 @@ NO_INPUT=""
 SKIP_UNINSTALL=0
 INSTALL_WYOMING=1
 INSTALL_OWW=1
+INSTALL_MWW=0
 INSTALL_SQUEEZELITE=1
 INTERACTIVE=1
 
@@ -133,6 +134,7 @@ interactive_prompts () {
     ### Prompt to select options to install
     INSTALL_WYOMING=0
     INSTALL_OWW=0
+    INSTALL_MWW=0
     INSTALL_SQUEEZELITE=0
     INSTALL_EVENTS=0
     INSTALL_SSHD=0
@@ -142,21 +144,34 @@ interactive_prompts () {
 	--title "Install Options" \
     --checklist "Select options to install" 15 90 5 \
             1   "Core Wyoming Satellite service." ON \
-            2   "OpenWakeWord to trigger the Assist pipeline locally on device." ON \
-            3   "Squeezelite to play your favourite tunes." ON \
-            4   "Event forwarder to expose Wyoming Events into Home Assistant." OFF \
-            5   "SSH Server to access Termux from another device." OFF 2>&1 >/dev/tty))
+            2   "Squeezelite to play your favourite tunes." ON \
+            3   "Event forwarder to expose Wyoming Events into Home Assistant." ON \
+            4   "SSH Server to access Termux from another device." OFF 2>&1 >/dev/tty))
 
     for sel in "${INSTALL_OPTS[@]}"; do
         case "$sel" in
             1) INSTALL_WYOMING=1;;
-            2) INSTALL_OWW=1;;
-            3) INSTALL_SQUEEZELITE=1;;
-            4) INSTALL_EVENTS=1;;
-            5) INSTALL_SSHD=1;;
+            2) INSTALL_SQUEEZELITE=1;;
+            3) INSTALL_EVENTS=1;;
+            4) INSTALL_SSHD=1;;
             *) echo "Unknown option!";;
         esac
     done
+
+    WAKE_WORD_SERVICE=$($DIALOG --stdout --title "Wyoming Configuration" \
+            --backtitle "$INTERACTIVE_TITLE" \
+            --radiolist "Wakeword Service" 50 50 5 \
+            "mww" "MicroWakeWord" OFF \
+            "oww" "OpenWakeWord" ON \
+            "none" "Skip" OFF)
+
+    if [ "$WAKE_WORD_SERVICE" = "none" ]; then
+        INSTALL_OWW=0
+    elif [ "$WAKE_WORD_SERVICE" = "mww" ]; then
+        INSTALL_MWW=1
+    elif [ "$WAKE_WORD_SERVICE" = "oww" ]; then
+        INSTALL_OWW=1
+    fi
 
     if $DIALOG --stdout --title "Autostart" \
             --backtitle "$INTERACTIVE_TITLE" \
@@ -536,6 +551,23 @@ EOF
         ./script/setup
         cd ..
         make_service "wyoming-wakeword" "wyoming-wakeword-android"
+    fi
+
+    if [ "$INSTALL_MWW" = "1" ]; then
+        echo "Selected $SELECTED_WAKE_WORD"
+        echo "Ensure python-tflite-runtime, ninja and patchelf are installed..."
+        pkg install python-tflite-runtime ninja patchelf -y
+        echo "Cloning Wyoming MicroWakeWord repo..."
+        cd ~
+        git clone https://github.com/rhasspy/wyoming-microwakeword.git
+        echo "Enter wyoming-microwakeword directory..."
+        cd wyoming-microwakeword
+        echo "Allow system site packages in Wyoming MicroWakeWord setup script..."
+        sed -i 's/\(builder = venv.EnvBuilder(with_pip=True\)/\1, system_site_packages=True/' ./script/setup
+        echo "Running Wyoming MicroWakeWord setup script..."
+        ./script/setup
+        cd ..
+        make_service "wyoming-wakeword" "wyoming-mwakeword-android"
     fi
 
     if [ "$INSTALL_SQUEEZELITE" = "1" ]; then

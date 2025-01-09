@@ -1,0 +1,15 @@
+#!/data/data/com.termux/files/usr/bin/sh
+. $HOME/wyoming.conf
+export VERSION=1
+
+wlog() {
+    local message="$1"
+    echo "$message" 2>&1 | tee -a "$HOME/wyoming-wakeword.log"
+}
+
+echo "" > "$HOME/wyoming-wakeword.log"
+wlog "$(date)"
+
+wlog "Enter wyoming-microwakeword directory..."
+cd "$HOME/wyoming-microwakeword"
+exec stdbuf -oL -eL python3 ./script/run --uri 'tcp://127.0.0.1:10400' --debug 2>&1 | tee -a "$HOME/wyoming-wakeword.log"
