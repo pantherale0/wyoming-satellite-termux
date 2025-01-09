@@ -1,0 +1,155 @@
+#!/data/data/com.termux/files/usr/bin/sh
+COMMAND=""
+BRANCH="main"
+
+for i in "$@"; do
+  case $i in
+    --branch=*)
+      BRANCH="${i#*=}"
+      shift
+      ;;
+    --restart)
+      COMMAND="RESTART"
+      shift
+      ;;
+    --disable)
+      COMMAND="DISABLE"
+      shift
+      ;;
+    --enable)
+      COMMAND="ENABLE"
+      shift
+      ;;
+    --start)
+      COMMAND="START"
+      shift
+      ;;
+    --stop)
+      COMMAND="STOP"
+      shift
+      ;;
+    --uninstall)
+      COMMAND="UNINSTALL"
+      shift
+      ;;
+    --update)
+      COMMAND="UPDATE"
+      shift
+      ;;
+    --update-cli)
+      COMMAND="UPDATECLI"
+      shift
+      ;;
+    --configure)
+      COMMAND="CONFIGURE"
+      shift
+      ;;
+    -*|--*)
+      echo "Unknown option $i"
+      exit 1
+      ;;
+    *)
+      ;;
+  esac
+done
+
+echo "Wyoming Android CLI: $BRANCH"
+
+enable_services () {
+  sv-enable wyoming-satellite
+  sv-enable wyoming-wakeword
+  sv-enable wyoming-events
+  sv-enable squeezelite
+}
+
+disable_services () {
+  sv-disable wyoming-satellite
+  sv-disable wyoming-wakeword
+  sv-disable wyoming-events
+  sv-disable squeezelite
+  killall python3
+  killall squeezelite
+}
+
+update_service () {
+  local SVC_NAME="$1"
+  local SVC_RUN_FILE="$2"
+  rm -f "$PREFIX/var/service/$SVC_NAME/run"
+  wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/services/$SVC_RUN_FILE" -O $PREFIX/var/service/$SVC_NAME/run
+  chmod +x $PREFIX/var/service/$SVC_NAME/run
+}
+
+if [ "$COMMAND" = "RESTART" ]; then
+  echo "Stopping Wyoming services"
+  disable_services
+  sleep 5
+  echo "Starting Wyoming services"
+  enable_services
+  exit 0
+fi
+
+if [ "$COMMAND" = "STOP" ]; then
+  echo "Stopping Wyoming services"
+  disable_services
+  exit 0
+fi
+
+if [ "$COMMAND" = "START" ]; then
+  echo "Starting Wyoming services"
+  enable_services
+  exit 0
+fi
+
+if [ "$COMMAND" = "UPDATECLI" ]; then
+  echo "Updating Wyoming CLI"
+  rm -f $PREFIX/bin/wyoming-cli
+  wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/scripts/wyoming-cli" -O $PREFIX/bin/wyoming-cli
+  chmod a+x $PREFIX/bin/wyoming-cli
+fi
+
+if [ "$COMMAND" = "UPDATE" ]; then
+  echo "Updating Wyoming Components"
+  echo "Disabling Wyoming"
+  disable_services
+  echo "Downloading Wyoming Satellite..."
+  cd $HOME/wyoming-satellite
+  git add wyoming_satellite/__main__.py
+  git stash # keep the injected faulthander
+  git pull
+  git stash pop # reapply injected faulthandler
+  echo "Updating Wyoming Satellite"
+  ./script/setup
+  echo "Wyoming Satellite updated"
+  echo "Downloading Wyoming WakeWord Changes"
+  cd $HOME/wyoming-openwakeword
+  git pull
+  echo "Updating Wyoming WakeWord"
+  ./script/Setup
+  echo "Wyoming WakeWord updated"
+  echo "Updating Wyoming Events"
+  wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/wyoming-events.py" -O ~/wyoming-events/wyoming-events.py
+  python3 -m pip install wyoming aiohttp
+  echo "Wyoming Events updated"
+  echo "Updating system packages"
+  pkg up
+  echo "Updated system packages"
+  echo "Checking version information from service configuration"
+  EXISTING_VERSION=$(cat $PREFIX/var/service/wyoming-satellite/run |grep -oP 'export VERSION=\d' | cut -d '=' -f2)
+  if [ "$EXISTING_VERSION" = "" ]; then
+    echo "Migration to wyoming.conf required... Press ctrl+C to skip"
+    sleep 10
+    touch $HOME/wyoming.conf
+    cat $PREFIX/var/service/wyoming-satellite/run |grep -oP '^export .*=.*$'|sed "s/export //g" >> $HOME/wyoming.conf
+    echo "Migrated Satellite runtime parameters"
+    cat $PREFIX/var/service/wyoming-events/run |grep -oP '^export .*=.*$'|sed "s/export //g" >> $HOME/wyoming.conf
+    echo "Migrated Events runtime parameters"
+  fi
+  echo "Pulling latest runtime scripts"
+  update_service "wyoming-satellite" "wyoming-satellite-android"
+  update_service "wyoming-wakeword" "wyoming-wakeword-android"
+  update_service "wyoming-events" "wyoming-events-android"
+  update_service "squeezelite" "squeezelite-android"
+  echo "Update completed, enabling services"
+  enable_services
+  exit 0
+fi

@@ -1,65 +1,136 @@
 ## Wyoming Satellite on Android
 
-This project provides a simple way of setting up Wyoming Satellite and OpenWakeWord on Android.
+This project provides a simple way of setting up Wyoming Satellite, OpenWakeWord and Squeezelite on Android inside of Termux.
 
 ### Prerequisites
 
 - Install [Termux](https://github.com/termux/termux-app) (open source terminal emulator app)
 - Install [Termux:API](https://github.com/termux/termux-api) (necessary to get mic access)
-- (Optional) Install [Termux:Boot](https://github.com/termux/termux-boot) and [open it once + disable battery optimization for Termux & Termux:Boot](https://wiki.termux.com/wiki/Termux:Boot) (only required if you want wyoming-satellite to autostart when your device restarts)
+- Install [Termux:Boot](https://github.com/termux/termux-boot) and [open it once + disable battery optimization for Termux & Termux:Boot](https://wiki.termux.com/wiki/Termux:Boot) (only required if you want wyoming-satellite to autostart when your device restarts)
+
+Install Termux via F-Droid or from the GitHub APKs. The version on Google Play should be treated as an unofficial fork [Termux Play Store](https://github.com/termux/termux-app/discussions/4000) as not all features are available in this version due to Google Play publishing policies.
 
 ### How to install
 
 For a default install, Open Termux and run:
 
 ``` Bash
-(command -v wget > /dev/null 2>&1 || (echo "Installing wget..." && pkg install -y wget)) && bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/install.sh)
-
+(command -v wget > /dev/null 2>&1 || (echo "Installing wget..." && pkg install -y wget)) && bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/merged/setup.sh)
 ```
 
-The above script will configure dependancies and install Wyoming as a service inside of Termux. This will be set to auto start on boot.
+The above script will display a GUI based installer for this suite of applications.
 
 A wakelock will be used to keep the services operational in the background.
 
-The default parameters will install Wyoming + OpenWakeWord, set the wake word to `Ok Nabu` and set the Home Assistant device name to the make and model of the Android device. It will also auto launch Wyoming at the end of installation.
+The default parameters will:
+1. Install Wyoming, OpenWakeWord and Squeezelite
+2. Set the wake word to `Ok Nabu`
+3. Set the Home Assistant device name to the make and model of the Android device.
+4. Auto launch Wyoming and OpenWakeWord at the end of installation.
 
 ### Command line parameters
 
-`--skip-uninstall`: Skip running uninstall and cleanup during installation
+`--install`: Install Wyoming and OpenWakeWord
 
-`--skip-wyoming`: Skip installing the Wyoming Satellite
+`--uninstall`: Cleanup and uninstall Wyoming and OpenWakeWord
 
-`--skip-wakeword`: Skip installing OpenWakeWord
+`--configure`: Reconfigure existing install with updated options
 
-`--wake-word=...`: Specify a wakeword to use (defaults to Ok Nabu), must be a supported wakeword by the OpenWakeWord project
+#### Configuration Parameters
 
-`--device-name=`: Specify a custom device name to use (defaults to make + model of device)
+* **`--wake-word=<wake_word>`:** Specify a wake word to use (defaults to "Ok Nabu"). 
+    * Must be a supported wake word by the OpenWakeWord project:
+        * `ok_nabu`
+        * `alexa`
+        * `hey_mycroft`
+        * `hey_jarvis`
+        * `hey_rhasspy` 
 
-`--no-autostart`: Don't start Wyoming at the end of installation
+* **`--device-name=`:** Specify a custom device name to use (defaults to the make + model of the device).
 
-`--hide-post-instructions`: Hide instructions and recommended settings at the end of installation
+* **`--wake-sound=`:** Full path to a wake sound file (played by the Satellite after using the wake word). 
+    * Must be a WAV file.
 
-`--q`: Bypass additional prompts that require pressing the enter key to continue
+* **`--done-sound=`:** Full path to a sound file that is played by the Satellite after you have finished speaking. 
+    * Must be a WAV file.
 
-### Supported wake word options
+* **`--timer-finished-sound=`:** Full path to a sound file that is played once a timer has finished.
+    * Must be a WAV file.
 
-`ok_nabu`: Ok Nabu (default)
+* **`--timer-finished-repeat=<repeats> <delay>`:** 
+    * Repeat the timer finished sound where:
+        * `<repeats>` is the number of times to repeat the WAV.
+        * `<delay>` is the number of seconds to wait between repeats. 
 
-`alexa`: Alexa
+#### Install Parameters
 
-`hey_mycroft`: Hey Mycroft
+* **`--skip-cleanup`:** Skip running uninstall and cleanup steps during installation.
 
-`hey_jarvis`: Hey Jarvis
+* **`--skip-wyoming`:** Skip installing the Wyoming Satellite software itself.
 
-`hey_rhasspy`: Hey Rhasspy
+* **`--skip-wakeword`:** Skip installing the OpenWakeWord engine used for wake word detection.
+
+* **`--skip-squeezelite`:** Skip installing the Squeezelite player software.
+
+* **`--install-ssh`:** Install an SSH server (openssh) to enable remote command-line access to the device.
+
+* **`--install-events`:** Install a Wyoming event forwarder to broadcast events to the Home Assistant event bus.
+
+* **`--no-autostart`:** Prevent Wyoming from automatically starting at the end of the installation process.
+
+* **`-q`:** Bypass confirmation prompts that normally require pressing Enter to continue.
+
+#### Home Assistant Event Bus
+
+Optionally, you can install a service to forward Wyoming events to your Home Assistant instance's event bus.
+
+**Required Parameters:**
+
+* **`--hass-url`:** The local URL of your Home Assistant instance (e.g., http://192.168.1.2:8123).
+
+* **`--hass-token`:** A [long-lived access token](https://community.home-assistant.io/t/how-to-get-long-lived-access-token/162159/5?u=11harveyj) to access your Home Assistant instance.
+
+**Logs:**
+
+* All Wyoming event forwarding logs will be recorded in the "wyoming-events.log" file.
+
+#### Available events:
+
+| Event Type | Event Description | Extra Event Data |
+|---|---|---|
+| wyoming_satellite-connected | Satellite has connected to Home Assistant | |
+| wyoming_run-satellite | Satellite has started | |
+| wyoming_streaming-stopped | Satellite has stopped streaming audio to or from Home Assistant | |
+| wyoming_run-pipeline | Satellite has started a new pipeline run | |
+| wyoming_detection | Wakeword detection event | `name`, `timestamp` |
+| wyoming_streaming-started | Satellite has started to stream audio to or from Home Assistant | |
+| wyoming_transcribe | Transcribe request started | `language` |
+| wyoming_voice-started | Voice detected | |
+| wyoming_voice-stopped | Voice finished | |
+| wyoming_transcript | Transcribe response (intent) | `text` |
+| wyoming_synthesize | Response from Assist Pipeline | `text`, `voice` |
+| wyoming_audio-start | Audio playback started | `rate`, `width`, `channels`, `timestamp` |
+| wyoming_audio-stop | Audio playback stopped | |
+| wyoming_played | Audio playback finished | |
+
+And any other event from Wyoming.
 
 ### How to uninstall
 
 Open Termux and run:
 
 ``` Bash
-wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/uninstall.sh | bash
+bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/merged/setup.sh) --uninstall
 ```
+
+### Reconfigure install
+
+Open Termux and run:
+``` Bash
+bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/merged/setup.sh) --configure
+```
+
+Without any command line flags, the install will reset to a default state. See the configuration section above for supported flags.
 
 ### Integrate into HomeAssistant
 
@@ -71,8 +142,8 @@ wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux
 
 ### Stopping / starting service
 
-- To stop the service, run `sv down wyoming`
-- To start the service, run `sv up wyoming`
+- To stop the service, run `wyoming-cli --stop`
+- To start the service, run `wyoming-cli --start`
 
 ### Using
 
@@ -83,15 +154,5 @@ The Assist pipeline can be changed in Home Assistant, look for the entity under 
 ### Supported devices
 
 - Lenovo ThinkSmart View
-
-Ensure you have completely restarted the device once setup is complete, Wyoming should autostart.
-
 - Microsoft Surface Go 2 (BlissOS 15)
-
-Run the script with your configured options and setup in Home Assistant, no further actions are required.
-
-### Devices not supported
-
 - Lenovo Smart Clock 2
-
-Setup is successful, however the Wyoming Satellite service crashes with `Bad system call`. The wake word service appears to run correctly.
