@@ -215,5 +215,6 @@ if [ "$COMMAND" = "REINSTALLWW" ]; then
     cd ..
     update_service "wyoming-wakeword" "wyoming-wakeword-android"
   fi
+  enable_services
 
 fi
