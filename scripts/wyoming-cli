@@ -1,4 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/sh
+. $HOME/wyoming.conf
 COMMAND=""
 BRANCH="main"
 
@@ -10,6 +11,10 @@ for i in "$@"; do
       ;;
     --restart)
       COMMAND="RESTART"
+      shift
+      ;;
+    --configure)
+      COMMAND="CONFIGURE"
       shift
       ;;
     --disable)
@@ -152,4 +157,44 @@ if [ "$COMMAND" = "UPDATE" ]; then
   echo "Update completed, enabling services"
   enable_services
   exit 0
+fi
+
+if [ $COMMAND = "CONFIGURE" ]; then
+  disable_services
+  echo "Wyoming Configuration Starting..."
+  declare -a ENABLE_OPTS=($($DIALOG --clear \
+	  --title "Enabled Services" \
+    --checklist "Select services to enable" 15 90 5 \
+            1   "Core Wyoming Satellite service." ON \
+            2   "OpenWakeWord to trigger the Assist pipeline locally on device." ON \
+            3   "Squeezelite to play your favourite tunes." ON \
+            4   "Event forwarder to expose Wyoming Events into Home Assistant." ON 2>&1 >/dev/tty))
+
+  for sel in "${ENABLE_OPTS[@]}"; do
+    case "$sel" in
+      1) ENABLE_WYOMING=1;;
+      2) ENABLE_OWW=1;;
+      3) ENABLE_SQUEEZELITE=1;;
+      4) ENABLE_EVENTS=1;;
+      *) echo "Unknown option!";;
+    esac
+  done
+  SELECTED_WAKE_WORD=$($DIALOG --stdout --title "Wyoming Configuration" \
+      --radiolist "Wakeword" 50 50 5 \
+      "alexa" "Alexa" OFF \
+      "ok_nabu" "Ok Nabu" ON \
+      "hey_mycroft" "Hey Mycroft" OFF \
+      "hey_jarvis" "Hey Jarvis" OFF \
+      "hey_rhasspy" "Hey Rhasspy" OFF)
+  CUSTOM_DEV_NAME=$($DIALOG --stdout --title "Wyoming Configuration" --inputbox "Enter a name for your device\nIt must not include spaces if the event forwarder is being installed\nExample: wyoming_kitchen_assistant" 15 50 "$CUSTOM_DEV_NAME")
+  HASS_URL=$($DIALOG --stdout --title "Events Configuration" --inputbox "Enter the URL of your Home Assistant install" 15 50 "$HASS_URL")
+  HASS_TOKEN=$($DIALOG --stdout --title "Events Configuration" --inputbox "Enter the acces token from Home Assistant\nThis can be copied into this prompt." 15 50 "$HASS_TOKEN")
+  if $DIALOG --stdout --title "Autostart" \
+        --backtitle "$INTERACTIVE_TITLE" \
+        --yesno "Enable related services to start automatically on boot?" 7 60; then
+    enable_services
+  else
+    $DIALOG --title "Autostart" --msgbox "You will need to start services manually" 6 44
+  fi
+  echo "Reconfiguration complete"
 fi

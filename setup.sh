@@ -11,7 +11,7 @@ BRANCH="main"
 
 # Installer
 INSTALL_SSHD=""
-INSTALL_EVENTS=""
+INSTALL_EVENTS=1
 NO_AUTOSTART=""
 NO_INPUT=""
 SKIP_UNINSTALL=0
@@ -78,10 +78,6 @@ for i in "$@"; do
       MODE="UNINSTALL"
       shift
       ;;
-    --configure)
-      MODE="CONFIGURE"
-      shift
-      ;;
     --no-autostart)
       NO_AUTOSTART=1
       shift
@@ -106,8 +102,8 @@ for i in "$@"; do
       INSTALL_SSHD=1
       shift
       ;;
-    --install-events)
-      INSTALL_EVENTS=1
+    --skip-events)
+      INSTALL_EVENTS=0
       shift
       ;;
     -q)
@@ -582,11 +578,5 @@ if [ "$MODE" = "UNINSTALL" ]; then
     exit 0
 fi
 
-if [ "$MODE" = "CONFIGURE" ]; then
-    configure
-    echo "Reconfiguration complete"
-    exit 0
-fi
-
-echo "Invalid mode specified, one of --install or --uninstall or --configure is required"
+echo "Invalid mode specified, one of --install or --uninstall is required"
 exit 1
