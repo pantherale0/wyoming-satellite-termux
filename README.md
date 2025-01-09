@@ -49,13 +49,13 @@ The default parameters will:
 * **`--device-name=`:** Specify a custom device name to use (defaults to the make + model of the device).
 
 * **`--wake-sound=`:** Full path to a wake sound file (played by the Satellite after using the wake word). 
-    * Must be a WAV file.
+    * Must be a WAV file (Sample Rate: 22050 Hz, Encoding: Signed 16-bit PCM)
 
 * **`--done-sound=`:** Full path to a sound file that is played by the Satellite after you have finished speaking. 
-    * Must be a WAV file.
+    * Must be a WAV file (Sample Rate: 22050 Hz, Encoding: Signed 16-bit PCM)
 
 * **`--timer-finished-sound=`:** Full path to a sound file that is played once a timer has finished.
-    * Must be a WAV file.
+    * Must be a WAV file (Sample Rate: 22050 Hz, Encoding: Signed 16-bit PCM)
 
 * **`--timer-finished-repeat=<repeats> <delay>`:** 
     * Repeat the timer finished sound where:
