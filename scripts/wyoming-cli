@@ -180,7 +180,7 @@ if [ "$COMMAND" = "REINSTALLWW" ]; then
 
   if [ "$WAKE_WORD_SERVICE" = "mww" ]; then
     echo "Deleting OpenWakeWord if it exists"
-    if [ -D "$HOME/wyoming-openwakeword" ]; then
+    if [ -d "$HOME/wyoming-openwakeword" ]; then
       rm -rf "$HOME/wyoming-openwakeword"
     fi
     echo "Ensure python-tflite-runtime, ninja and patchelf are installed..."
@@ -198,7 +198,7 @@ if [ "$COMMAND" = "REINSTALLWW" ]; then
     update_service "wyoming-wakeword" "wyoming-mwakeword-android"
   elif [ "$WAKE_WORD_SERVICE" = "oww" ]; then
     echo "Deleting MicronWakeWord if it exists"
-    if [ -D "$HOME/wyoming-microwakeword" ]; then
+    if [ -d "$HOME/wyoming-microwakeword" ]; then
       rm -rf "$HOME/wyoming-microwakeword"
     fi
     echo "Ensure python-tflite-runtime, ninja and patchelf are installed..."
