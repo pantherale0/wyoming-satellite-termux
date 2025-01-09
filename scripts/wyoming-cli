@@ -183,8 +183,11 @@ if [ "$COMMAND" = "REINSTALLWW" ]; then
     if [ -d "$HOME/wyoming-openwakeword" ]; then
       rm -rf "$HOME/wyoming-openwakeword"
     fi
-    echo "Ensure python-tflite-runtime, ninja and patchelf are installed..."
-    pkg install python-tflite-runtime ninja patchelf -y
+    echo "Ensure dependancies are installed..."
+    pkg install pacman -y
+    pacman-key --init
+    pacman-key --populate
+    pacman -Sy glibc-runner --noconfirm --overwrite "*" # this is very nasty
     echo "Cloning Wyoming Porcupine repo..."
     cd $HOME
     git clone https://github.com/rhasspy/wyoming-porcupine1.git

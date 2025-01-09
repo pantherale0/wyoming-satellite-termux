@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/sh
 . $HOME/wyoming.conf
-export VERSION=1
+export VERSION=2
 
 wlog() {
     local message="$1"
@@ -33,7 +33,7 @@ else
     export SATELLITE_NAME="$CUSTOM_DEV_NAME"
 fi
 
-if [ "$OWW_ENABLED" = "true" ]; then
+if [ "$WW_ENABLED" = "true" ]; then
     sv start wyoming-wakeword || exit 1
     export OWW_FLAGS="--wake-uri tcp://127.0.0.1:10400 --wake-word-name $SELECTED_WAKE_WORD"
 else
