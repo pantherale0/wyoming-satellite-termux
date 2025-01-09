@@ -175,31 +175,31 @@ if [ "$COMMAND" = "REINSTALLWW" ]; then
   WAKE_WORD_SERVICE=$($DIALOG --stdout --title "Wyoming Configuration" \
             --backtitle "$INTERACTIVE_TITLE" \
             --radiolist "Wakeword Service" 50 50 5 \
-            "mww" "MicroWakeWord" OFF \
+            "porcupine" "Porcupine" OFF \
             "oww" "OpenWakeWord" ON)
 
-  if [ "$WAKE_WORD_SERVICE" = "mww" ]; then
+  if [ "$WAKE_WORD_SERVICE" = "porcupine" ]; then
     echo "Deleting OpenWakeWord if it exists"
     if [ -d "$HOME/wyoming-openwakeword" ]; then
       rm -rf "$HOME/wyoming-openwakeword"
     fi
     echo "Ensure python-tflite-runtime, ninja and patchelf are installed..."
     pkg install python-tflite-runtime ninja patchelf -y
-    echo "Cloning Wyoming MicroWakeWord repo..."
+    echo "Cloning Wyoming Porcupine repo..."
     cd $HOME
-    git clone https://github.com/rhasspy/wyoming-microwakeword.git
-    echo "Enter wyoming-microwakeword directory..."
-    cd wyoming-microwakeword
-    echo "Allow system site packages in Wyoming MicroWakeWord setup script..."
+    git clone https://github.com/rhasspy/wyoming-porcupine1.git
+    echo "Enter wyoming-porcupine1 directory..."
+    cd wyoming-porcupine1
+    echo "Allow system site packages in Wyoming Porcupine setup script..."
     sed -i 's/\(builder = venv.EnvBuilder(with_pip=True\)/\1, system_site_packages=True/' ./script/setup
-    echo "Running Wyoming MicroWakeWord setup script..."
+    echo "Running Wyoming Porcupine setup script..."
     ./script/setup
     cd ..
-    update_service "wyoming-wakeword" "wyoming-mwakeword-android"
+    update_service "wyoming-wakeword" "wyoming-porcupine-android"
   elif [ "$WAKE_WORD_SERVICE" = "oww" ]; then
-    echo "Deleting MicronWakeWord if it exists"
-    if [ -d "$HOME/wyoming-microwakeword" ]; then
-      rm -rf "$HOME/wyoming-microwakeword"
+    echo "Deleting Porcupine if it exists"
+    if [ -d "$HOME/wyoming-porcupine1" ]; then
+      rm -rf "$HOME/wyoming-porcupine1"
     fi
     echo "Ensure python-tflite-runtime, ninja and patchelf are installed..."
     pkg install python-tflite-runtime ninja patchelf -y

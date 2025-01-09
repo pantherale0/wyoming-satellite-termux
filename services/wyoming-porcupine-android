@@ -10,6 +10,6 @@ wlog() {
 echo "" > "$HOME/wyoming-wakeword.log"
 wlog "$(date)"
 
-wlog "Enter wyoming-microwakeword directory..."
-cd "$HOME/wyoming-microwakeword"
+wlog "Enter wyoming-porcupine1 directory..."
+cd "$HOME/wyoming-porcupine1"
 exec stdbuf -oL -eL python3 ./script/run --uri 'tcp://127.0.0.1:10400' --debug 2>&1 | tee -a "$HOME/wyoming-wakeword.log"

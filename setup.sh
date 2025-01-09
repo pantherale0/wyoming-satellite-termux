@@ -16,8 +16,7 @@ NO_AUTOSTART=""
 NO_INPUT=""
 SKIP_UNINSTALL=0
 INSTALL_WYOMING=1
-INSTALL_OWW=1
-INSTALL_MWW=0
+WAKE_WORD_SERVICE="none"
 INSTALL_SQUEEZELITE=1
 INTERACTIVE=1
 
@@ -133,8 +132,6 @@ echo "Branch: $BRANCH"
 interactive_prompts () {
     ### Prompt to select options to install
     INSTALL_WYOMING=0
-    INSTALL_OWW=0
-    INSTALL_MWW=0
     INSTALL_SQUEEZELITE=0
     INSTALL_EVENTS=0
     INSTALL_SSHD=0
@@ -161,17 +158,9 @@ interactive_prompts () {
     WAKE_WORD_SERVICE=$($DIALOG --stdout --title "Wyoming Configuration" \
             --backtitle "$INTERACTIVE_TITLE" \
             --radiolist "Wakeword Service" 50 50 5 \
-            "mww" "MicroWakeWord" OFF \
+            "porcupine" "Porcupine" OFF \
             "oww" "OpenWakeWord" ON \
             "none" "Skip" OFF)
-
-    if [ "$WAKE_WORD_SERVICE" = "none" ]; then
-        INSTALL_OWW=0
-    elif [ "$WAKE_WORD_SERVICE" = "mww" ]; then
-        INSTALL_MWW=1
-    elif [ "$WAKE_WORD_SERVICE" = "oww" ]; then
-        INSTALL_OWW=1
-    fi
 
     if $DIALOG --stdout --title "Autostart" \
             --backtitle "$INTERACTIVE_TITLE" \
@@ -348,13 +337,13 @@ configure () {
     echo "TIMERFINISHEDSOUND=\"$SELECTED_TIMER_DONE_SOUND\"" >> $HOME/wyoming.conf
     echo "TIMERFINISHEDREPEAT=\"$SELECTED_TIMER_REPEAT\"" >> $HOME/wyoming.conf
 
-    echo "Configuring OpenWakeWord..."
+    echo "Configuring WakeWord..."
     # OWW
     echo "SELECTED_WAKE_WORD=\"$SELECTED_WAKE_WORD\"" >> $HOME/wyoming.conf
-    if [ "$INSTALL_OWW" = "1" ]; then
-        echo "OWW_ENABLED=true" >> $HOME/wyoming.conf
+    if [ ! "$WAKE_WORD_SERVICE" = "none" ]; then
+        echo "WW_ENABLED=true" >> $HOME/wyoming.conf
     else
-        echo "OWW_ENABLED=" >> $HOME/wyoming.conf
+        echo "WW_ENABLED=" >> $HOME/wyoming.conf
     fi
 }
 
@@ -536,7 +525,7 @@ EOF
         echo "Successfully installed and set up Wyoming Satellite"
     fi
 
-    if [ "$INSTALL_OWW" = "1" ]; then
+    if [ "$WAKE_WORD_SERVICE" = "oww" ]; then
         echo "Selected $SELECTED_WAKE_WORD"
         echo "Ensure python-tflite-runtime, ninja and patchelf are installed..."
         pkg install python-tflite-runtime ninja patchelf -y
@@ -553,21 +542,21 @@ EOF
         make_service "wyoming-wakeword" "wyoming-wakeword-android"
     fi
 
-    if [ "$INSTALL_MWW" = "1" ]; then
+    if [ "$WAKE_WORD_SERVICE" = "porcupine" ]; then
         echo "Selected $SELECTED_WAKE_WORD"
         echo "Ensure python-tflite-runtime, ninja and patchelf are installed..."
         pkg install python-tflite-runtime ninja patchelf -y
-        echo "Cloning Wyoming MicroWakeWord repo..."
+        echo "Cloning Wyoming Porcupine repo..."
         cd ~
-        git clone https://github.com/rhasspy/wyoming-microwakeword.git
-        echo "Enter wyoming-microwakeword directory..."
-        cd wyoming-microwakeword
-        echo "Allow system site packages in Wyoming MicroWakeWord setup script..."
+        git clone https://github.com/rhasspy/wyoming-porcupine1.git
+        echo "Enter wyoming-porcupine1 directory..."
+        cd wyoming-porcupine1
+        echo "Allow system site packages in Wyoming Porcupine setup script..."
         sed -i 's/\(builder = venv.EnvBuilder(with_pip=True\)/\1, system_site_packages=True/' ./script/setup
-        echo "Running Wyoming MicroWakeWord setup script..."
+        echo "Running Wyoming Porcupine setup script..."
         ./script/setup
         cd ..
-        make_service "wyoming-wakeword" "wyoming-mwakeword-android"
+        make_service "wyoming-wakeword" "wyoming-porcupine-android"
     fi
 
     if [ "$INSTALL_SQUEEZELITE" = "1" ]; then
