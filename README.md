@@ -15,7 +15,7 @@ Install Termux via F-Droid or from the GitHub APKs. The version on Google Play s
 For a default install, Open Termux and run:
 
 ``` Bash
-(command -v wget > /dev/null 2>&1 || (echo "Installing wget..." && pkg install -y wget)) && bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/merged/setup.sh)
+(command -v wget > /dev/null 2>&1 || (echo "Installing wget..." && pkg install -y wget)) && bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/setup.sh)
 ```
 
 The above script will display a GUI based installer for this suite of applications.
@@ -120,14 +120,14 @@ And any other event from Wyoming.
 Open Termux and run:
 
 ``` Bash
-bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/merged/setup.sh) --uninstall
+bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/setup.sh) --uninstall
 ```
 
 ### Reconfigure install
 
 Open Termux and run:
 ``` Bash
-bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/merged/setup.sh) --configure
+bash <(wget -qO- https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/main/setup.sh) --configure
 ```
 
 Without any command line flags, the install will reset to a default state. See the configuration section above for supported flags.
