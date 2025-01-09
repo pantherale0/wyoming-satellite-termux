@@ -12,4 +12,4 @@ wlog "$(date)"
 
 wlog "Enter wyoming-openwakeword directory..."
 cd "$HOME/wyoming-openwakeword"
-exec stdbuf -oL -eL python3 ./script/run --uri 'tcp://0.0.0.0:10400' --preload-model "$SELECTED_WAKE_WORD" --debug 2>&1 | tee -a "$HOME/wyoming-wakeword.log"
+exec stdbuf -oL -eL python3 ./script/run --uri 'tcp://127.0.0.1:10400' --preload-model "$SELECTED_WAKE_WORD" --debug 2>&1 | tee -a "$HOME/wyoming-wakeword.log"
