@@ -1,4 +1,8 @@
 #!/data/data/com.termux/files/usr/bin/sh
+: ${DIALOG=dialog}
+: ${DIALOG_OK=0}
+: ${DIALOG_CANCEL=1}
+: ${DIALOG_ESC=255}
 COMMAND=""
 BRANCH="main"
 
