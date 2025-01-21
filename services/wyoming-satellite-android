@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/sh
 . $HOME/wyoming.conf
-export VERSION=1
+export VERSION=2
 
 wlog() {
     local message="$1"
@@ -69,4 +69,4 @@ exec stdbuf -oL -eL python3 ./script/run \
 --timer-finished-wav-repeat $TIMERFINISHEDREPEAT \
 $OWW_FLAGS \
 $EVENTS_FLAGS \
---debug 2>&1 | tee -a "$HOME/wyoming-satellite.log"
+$WYOMING_SATELLITE_FLAGS 2>&1 | tee -a "$HOME/wyoming-satellite.log"

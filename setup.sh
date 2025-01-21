@@ -25,6 +25,7 @@ SELECTED_WAKE_WORD="ok_nabu"
 SELECTED_DEVICE_NAME=""
 HASS_TOKEN=""
 HASS_URL="http://homeassistant.local:8123"
+WYOMING_SATELLITE_FLAGS="--debug"
 
 # Wake sounds
 SELECTED_WAKE_SOUND="./sounds/awake.wav"
@@ -179,6 +180,7 @@ interactive_prompts () {
             "hey_jarvis" "Hey Jarvis" OFF \
             "hey_rhasspy" "Hey Rhasspy" OFF)
         SELECTED_DEVICE_NAME=$($DIALOG --stdout --title "Wyoming Configuration" --backtitle "$INTERACTIVE_TITLE" --inputbox "Enter a name for your device\nIt must not include spaces if the event forwarder is being installed\nExample: wyoming_kitchen_assistant" 15 50)
+        WYOMING_SATELLITE_FLAGS=$($DIALOG --stdout --title "Wyoming Configuration" --backtitle "$INTERACTIVE_TITLE" --inputbox "Enter additional Wyoming Satellite startup flags" 15 50 "$WYOMING_SATELLITE_FLAGS")
     fi
 
     if [ "$INSTALL_EVENTS" = "1" ]; then
@@ -332,6 +334,7 @@ configure () {
     echo "DONESOUND=\"$SELECTED_DONE_SOUND\"" >> $HOME/wyoming.conf
     echo "TIMERFINISHEDSOUND=\"$SELECTED_TIMER_DONE_SOUND\"" >> $HOME/wyoming.conf
     echo "TIMERFINISHEDREPEAT=\"$SELECTED_TIMER_REPEAT\"" >> $HOME/wyoming.conf
+    echo "WYOMING_SATELLITE_FLAGS=\"$WYOMING_SATELLITE_FLAGS\"" >> $HOME/wyoming.conf
 
     echo "Configuring OpenWakeWord..."
     # OWW

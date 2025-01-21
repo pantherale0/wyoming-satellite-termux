@@ -124,7 +124,7 @@ if [ "$COMMAND" = "UPDATE" ]; then
   cd $HOME/wyoming-openwakeword
   git pull
   echo "Updating Wyoming WakeWord"
-  ./script/Setup
+  ./script/setup
   echo "Wyoming WakeWord updated"
   echo "Updating Wyoming Events"
   wget "https://raw.githubusercontent.com/pantherale0/wyoming-satellite-termux/refs/heads/$BRANCH/wyoming-events.py" -O ~/wyoming-events/wyoming-events.py
@@ -143,6 +143,10 @@ if [ "$COMMAND" = "UPDATE" ]; then
     echo "Migrated Satellite runtime parameters"
     cat $PREFIX/var/service/wyoming-events/run |grep -oP '^export .*=.*$'|sed "s/export //g" >> $HOME/wyoming.conf
     echo "Migrated Events runtime parameters"
+  fi
+  if [ "$EXISTING_VERSION" = "1" ]; then
+    echo "Migrating satellite to V2"
+    echo "WYOMING_SATELLITE_FLAGS=\"--debug\"" >> $HOME/wyoming.conf
   fi
   echo "Pulling latest runtime scripts"
   update_service "wyoming-satellite" "wyoming-satellite-android"
